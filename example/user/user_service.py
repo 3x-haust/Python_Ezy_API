@@ -8,14 +8,6 @@ from example.user.entity import UserEntity
 from ezyapi import EzyService
 
 class UserService(EzyService):
-    async def get_user_by_name(self, name: str) -> UserResponseDTO:
-        user = await self.repository.find_one(where={"name": name})
-
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        return UserResponseDTO(id=user.id, name=user.name, email=user.email, age=user.age)
-
     async def get_user_by_id(self, id: int) -> UserResponseDTO:
         user = await self.repository.find_one(where={"id": id})
 
