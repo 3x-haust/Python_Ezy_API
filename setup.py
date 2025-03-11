@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="ezyapi",
-    version="0.0.1",
+    version="0.0.2",
     author="3xhaust, nck90",
     author_email="s2424@e-mirim.hs.kr, s2460@e-mirim.hs.kr",
     description="API 생성 및 프로젝트 관리를 위한 프레임워크",
@@ -20,7 +20,6 @@ setuptools.setup(
         'inflect',
     ],
     license_file='MIT',
-    keywords=['3xhaust', 'nck90', 'python api', 'ezy api', 'backend'],
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
