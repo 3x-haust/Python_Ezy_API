@@ -2,3 +2,6 @@ fastapi
 pydantic
 uvicorn
 inflect
+psycopg2
+pymysql
+motor
