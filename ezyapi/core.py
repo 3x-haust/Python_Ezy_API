@@ -1,13 +1,28 @@
 import inspect
 import re
-from typing import Any, Dict, Type, get_type_hints, Optional
+from typing import Any, Dict, Type, get_type_hints, Optional, Callable
 from fastapi import APIRouter, Depends, FastAPI, Path, Query, Request, HTTPException
 from pydantic import BaseModel
 import inflect
+from functools import wraps
 
 from ezyapi.database import EzyService, DatabaseConfig, auto_inject_repository
 
 p = inflect.engine()
+
+# Custom route decorator
+def route(method: str, path: str, **kwargs):
+    def decorator(func: Callable):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            return await func(*args, **kwargs)
+        wrapper.__route_info__ = {
+            'method': method.lower(),
+            'path': path,
+            'extra_kwargs': kwargs
+        }
+        return wrapper
+    return decorator
 
 class EzyAPI:
     def __init__(self, 
@@ -49,8 +64,18 @@ class EzyAPI:
             if method_name.startswith('_'):
                 continue
 
-            http_method, path = self._parse_method_name(method_name)
+            # Check if method has custom route decorator
+            custom_route = getattr(method, '__route_info__', None)
+            if custom_route:
+                http_method = custom_route['method']
+                path = custom_route['path']
+                extra_kwargs = custom_route['extra_kwargs']
+            else:
+                # Fall back to automatic routing
+                http_method, path = self._parse_method_name(method_name)
+                extra_kwargs = {}
 
+            # Validate route conflicts
             if http_method in existing_routes:
                 for existing_path in existing_routes[http_method]:
                     if self._is_conflicting_path(existing_path, path):
@@ -100,7 +125,8 @@ class EzyAPI:
             route = getattr(router, http_method)(
                 path,
                 response_model=return_type if return_type != Any else None,
-                summary=method.__doc__.strip() if method.__doc__ else method_name
+                summary=method.__doc__.strip() if method.__doc__ else method_name,
+                **extra_kwargs
             )
             route(func)
         
