@@ -13,7 +13,7 @@ API 생성 및 프로젝트 관리를 위한 프레임워크입니다. Ezy API�
 ## 설치
 
 ```bash
-pip install ezy-api
+pip install ezyapi
 ```
 
 ## CLI 사용법
