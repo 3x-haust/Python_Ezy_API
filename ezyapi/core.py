@@ -159,9 +159,5 @@ class EzyAPI:
         return http_method, path
     
     def run(self, host: str = "0.0.0.0", port: int = 8000, **kwargs):
-        print("Registered Routes:")
-        for route in self.app.routes:
-            print(f"Path: {route.path}, Methods: {route.methods}")
-
         import uvicorn
         uvicorn.run(self.app, host=host, port=port, **kwargs)
