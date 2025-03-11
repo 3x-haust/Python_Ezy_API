@@ -12,8 +12,8 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/3x-haust/Python_Ezy_API",
-    install_requires=[
     keywords=['3xhaust', 'nck90', 'python api', 'ezy api', 'backend', 'cli'],
+    install_requires=[
         'fastapi',
         'pydantic',
         'uvicorn',
