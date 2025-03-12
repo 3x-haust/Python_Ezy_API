@@ -10,7 +10,6 @@ from ezyapi.database import EzyService, DatabaseConfig, auto_inject_repository
 
 p = inflect.engine()
 
-# Custom route decorator
 def route(method: str, path: str, **kwargs):
     def decorator(func: Callable):
         @wraps(func)
@@ -46,7 +45,9 @@ class EzyAPI:
         service_name = self._get_service_name(service_class)
         self.services[service_name] = service_class
         router = self._create_router_from_service(service_class)
-        self.app.include_router(router, prefix=f"/{service_name}", tags=[service_name])
+
+        prefix = "" if service_name == "app" else f"/{service_name}"
+        self.app.include_router(router, prefix=prefix, tags=[service_name])
     
     def _get_service_name(self, service_class: Type[EzyService]) -> str:
         name = service_class.__name__
@@ -64,18 +65,15 @@ class EzyAPI:
             if method_name.startswith('_'):
                 continue
 
-            # Check if method has custom route decorator
             custom_route = getattr(method, '__route_info__', None)
             if custom_route:
                 http_method = custom_route['method']
                 path = custom_route['path']
                 extra_kwargs = custom_route['extra_kwargs']
             else:
-                # Fall back to automatic routing
                 http_method, path = self._parse_method_name(method_name)
                 extra_kwargs = {}
 
-            # Validate route conflicts
             if http_method in existing_routes:
                 for existing_path in existing_routes[http_method]:
                     if self._is_conflicting_path(existing_path, path):
