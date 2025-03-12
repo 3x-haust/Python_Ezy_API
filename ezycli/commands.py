@@ -297,14 +297,12 @@ def install_dependencies(args):
                 packages_to_install[pkg_name] = f"=={pkg_version}"
             else:
                 packages_to_install[pkg] = "latest"
-        # 새로 추가된 패키지를 config의 dependencies에 업데이트
         for pkg, ver in packages_to_install.items():
             dependencies[pkg] = ver
         config["dependencies"] = dependencies
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=2)
     else:
-        # 인자가 없으면 전체 dependencies를 설치할 대상 패키지로 지정
         packages_to_install = dependencies
 
     if not packages_to_install:
