@@ -44,21 +44,20 @@ class EzyAPI:
         
         service_name = self._get_service_name(service_class)
         self.services[service_name] = service_class
-        router = self._create_router_from_service(service_class)
-
+        router = self._create_router_from_service(service_class, service_name)
+        
         prefix = "" if service_name == "app" else f"/{service_name}"
         self.app.include_router(router, prefix=prefix, tags=[service_name])
-    
+
     def _get_service_name(self, service_class: Type[EzyService]) -> str:
         name = service_class.__name__
         if name.endswith("Service"):
             name = name[:-7]
         return p.singular_noun(name.lower()) or name.lower()
     
-    def _create_router_from_service(self, service_class: Type[EzyService]) -> APIRouter:
+    def _create_router_from_service(self, service_class: Type[EzyService], service_name: str) -> APIRouter:
         router = APIRouter()
         service_instance = auto_inject_repository(service_class, self.db_config)
-
         existing_routes = {}
 
         for method_name, method in inspect.getmembers(service_class, inspect.isfunction):
@@ -73,6 +72,9 @@ class EzyAPI:
             else:
                 http_method, path = self._parse_method_name(method_name)
                 extra_kwargs = {}
+
+            if service_name == "app" and path == "":
+                path = "/"
 
             if http_method in existing_routes:
                 for existing_path in existing_routes[http_method]:
@@ -117,7 +119,7 @@ class EzyAPI:
                 async def simple_endpoint(service_instance=service_instance, method=method):
                     return await method(service_instance)
                 func = simple_endpoint
-            
+
             func.__name__ = method_name
 
             route = getattr(router, http_method)(
@@ -127,8 +129,9 @@ class EzyAPI:
                 **extra_kwargs
             )
             route(func)
-        
+
         return router
+
     
     def _parse_method_name(self, method_name: str) -> tuple:
         http_methods = {
