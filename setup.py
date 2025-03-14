@@ -13,15 +13,6 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/3x-haust/Python_Ezy_API",
     keywords=['3xhaust', 'nck90', 'python api', 'ezy api', 'backend', 'cli'],
-    install_requires=[
-        'fastapi',
-        'pydantic',
-        'uvicorn',
-        'inflect',
-        'psycopg2',
-        'pymysql',
-        'motor',
-    ],
     license_file='MIT',
     packages=setuptools.find_packages(),
     classifiers=[
@@ -29,9 +20,6 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    extras_require={
-        "cli": [],
-    },
     entry_points={
         'console_scripts': [
             'ezy = ezycli:main'
