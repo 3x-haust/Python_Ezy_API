@@ -1,0 +1,5 @@
+.venv
+ezy_modules/
+__pycache__/
+*.pyc
+.env

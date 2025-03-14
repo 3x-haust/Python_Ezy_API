@@ -1,0 +1,30 @@
+{
+  "name": "test",
+  "version": "0.1.0",
+  "scripts": {
+    "start": "python3 main.py",
+    "dev": "python3 main.py --dev"
+  },
+  "dependencies": {
+    "annotated-types": "latest",
+    "anyio": "latest",
+    "click": "latest",
+    "dnspython": "latest",
+    "fastapi": "latest",
+    "h11": "latest",
+    "idna": "latest",
+    "inflect": "latest",
+    "more-itertools": "latest",
+    "motor": "latest",
+    "psycopg2": "latest",
+    "pydantic": "latest",
+    "pydantic_core": "latest",
+    "pymongo": "latest",
+    "PyMySQL": "latest",
+    "sniffio": "latest",
+    "starlette": "latest",
+    "typeguard": "latest",
+    "typing_extensions": "latest",
+    "uvicorn": "latest"
+  }
+}
