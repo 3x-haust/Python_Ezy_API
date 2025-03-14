@@ -157,7 +157,6 @@ ezy_modules/
 # .idea/*.iml
 # .idea/modules
 # *.iml
-# *.ipr
 
 # CMake
 cmake-build-*/
@@ -467,6 +466,14 @@ def generate_resource(name):
     except Exception:
         pass
     base_dir = os.getcwd()
+    
+    # 루트 디렉토리에 __init__.py가 없는 경우 생성
+    root_init = os.path.join(base_dir, "__init__.py")
+    if not os.path.exists(root_init):
+        with open(root_init, "w", encoding="utf-8") as f:
+            f.write("")
+        print(f"{GREEN}CREATE {root_init} (0 bytes){RESET}")
+    
     resource_dir = os.path.join(base_dir, name.lower())
     if os.path.exists(resource_dir):
         print(f"{RED}Error: Resource folder already exists: {resource_dir}{RESET}", file=sys.stderr)
