@@ -706,6 +706,10 @@ def install_dependencies(args):
     modules_path = os.path.join(os.getcwd(), "ezy_modules")
     if not os.path.exists(modules_path):
         os.makedirs(modules_path)
+    print(f"{YELLOW}Installing dependencies into ezy_modules...{RESET}")
+    stop_event = threading.Event()
+    spinner_thread = threading.Thread(target=spinner_task, args=(stop_event,))
+    spinner_thread.start()
     for pkg, ver in packages_to_install.items():
         result = subprocess.run(
             [sys.executable, "-m", "pip", "install", "--target", modules_path, pkg],
@@ -713,9 +717,12 @@ def install_dependencies(args):
             stderr=subprocess.DEVNULL
         )
         if result.returncode != 0:
+            stop_event.set()
+            spinner_thread.join()
             print(f"{RED}Failed to install {pkg}.{RESET}", file=sys.stderr)
             sys.exit(1)
-    print(f"{GREEN}Dependencies installed successfully.{RESET}")
+    stop_event.set()
+    spinner_thread.join()
     update_dependencies_json(modules_path, config_path)
 
 def run_script(args):
