@@ -85,6 +85,45 @@ def spinner_task(stop_event):
         idx += 1
     print(f"\r{GREEN}✔ Dependencies installed successfully.            {RESET}")
 
+def update_main_for_service(name):
+    main_path = os.path.join(os.getcwd(), "main.py")
+    if not os.path.exists(main_path):
+        return  # main.py가 없으면 업데이트하지 않음.
+    service_import = f"from {name.lower()}.{name.lower()}_service import {name.capitalize()}Service"
+    service_add = f"    app.add_service({name.capitalize()}Service)"
+    try:
+        with open(main_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+    except Exception as e:
+        print(f"{RED}Error reading main.py: {e}{RESET}", file=sys.stderr)
+        return
+
+    # import 구문이 존재하는지 확인, 없으면 추가
+    import_exists = any(service_import in line for line in lines)
+    if not import_exists:
+        insert_idx = 0
+        for i, line in enumerate(lines):
+            if line.startswith("from") or line.startswith("import"):
+                insert_idx = i + 1
+            else:
+                break
+        lines.insert(insert_idx, service_import + "\n")
+    
+    # add_service 호출이 존재하는지 확인, 없으면 추가
+    add_exists = any(service_add.strip() in line.strip() for line in lines)
+    if not add_exists:
+        for i, line in enumerate(lines):
+            if "app.run(" in line:
+                lines.insert(i, service_add + "\n")
+                break
+
+    try:
+        with open(main_path, "w", encoding="utf-8") as f:
+            f.writelines(lines)
+        print(f"{GREEN}Updated main.py with {name.capitalize()}Service.{RESET}")
+    except Exception as e:
+        print(f"{RED}Error updating main.py: {e}{RESET}", file=sys.stderr)
+
 def new_project(project_name):
     project_path = os.path.join(os.getcwd(), project_name)
     if os.path.exists(project_path):
@@ -388,7 +427,6 @@ pyrightconfig.json
 ### VisualStudioCode Patch ###
 .history
 .ionide
-
 """)
     print_create_message(gitignore_path)
     default_packages = [
@@ -480,7 +518,7 @@ def generate_resource(name):
         sys.exit(1)
     os.makedirs(resource_dir)
     transport = input(f"{YELLOW}What transport layer do you use? [REST API]: {RESET}") or "REST API"
-    crud_answer = input(f"{YELLOW}Would you like to generate CRUD entry points? [Yes/No]: {RESET}").strip().lower()
+    crud_answer = input(f"{YELLOW}Would you like to generate CRUD entry points? [Yes/No]: {RESET}").strip().lower() or "yes"
     crud = crud_answer in ["yes", "y"]
     if not crud:
         service_path = os.path.join(resource_dir, f"{name.lower()}_service.py")
@@ -492,6 +530,7 @@ class {name.capitalize()}Service(EzyService):
     pass
 """)
         print(f"{GREEN}Resource '{name}' created at: {resource_dir}{RESET}")
+        update_main_for_service(name)
         return
     with open(os.path.join(resource_dir, "__init__.py"), "w", encoding="utf-8") as f:
         f.write("")
@@ -503,33 +542,35 @@ class {name.capitalize()}Service(EzyService):
     os.makedirs(entity_dir)
     with open(os.path.join(entity_dir, "__init__.py"), "w", encoding="utf-8") as f:
         f.write("")
-    create_dto_path = os.path.join(dto_dir, f"create_{name.lower()}_dto.py")
+    # DTO 파일 이름 변경: <resource>_create_dto.py, <resource>_update_dto.py
+    create_dto_path = os.path.join(dto_dir, f"{name.lower()}_create_dto.py")
     with open(create_dto_path, "w", encoding="utf-8") as f:
         f.write(f"""from pydantic import BaseModel
 
 class {name.capitalize()}CreateDTO(BaseModel):
     pass
 """)
-    update_dto_path = os.path.join(dto_dir, f"update_{name.lower()}_dto.py")
+    update_dto_path = os.path.join(dto_dir, f"{name.lower()}_update_dto.py")
     with open(update_dto_path, "w", encoding="utf-8") as f:
         f.write(f"""from pydantic import BaseModel
 
 class {name.capitalize()}UpdateDTO(BaseModel):
     pass
 """)
+    # Entity 템플릿 수정: EzyEntityBase를 상속하지 않음
     entity_path = os.path.join(entity_dir, f"{name.lower()}_entity.py")
     with open(entity_path, "w", encoding="utf-8") as f:
         f.write(f"""from ezyapi.database import EzyEntityBase
 
-class {name.capitalize()}Entity(EzyEntityBase):
+class {name.capitalize()}Entity():
     pass
 """)
     service_path = os.path.join(resource_dir, f"{name.lower()}_service.py")
     with open(service_path, "w", encoding="utf-8") as f:
         f.write(f"""# Transport layer: {transport}
 from ezyapi import EzyService
-from {name.lower()}.dto.create_{name.lower()}_dto import {name.capitalize()}CreateDTO
-from {name.lower()}.dto.update_{name.lower()}_dto import {name.capitalize()}UpdateDTO
+from {name.lower()}.dto.{name.lower()}_create_dto import {name.capitalize()}CreateDTO
+from {name.lower()}.dto.{name.lower()}_update_dto import {name.capitalize()}UpdateDTO
 from {name.lower()}.entity.{name.lower()}_entity import {name.capitalize()}Entity
 
 class {name.capitalize()}Service(EzyService):
@@ -549,6 +590,8 @@ class {name.capitalize()}Service(EzyService):
         return f'This action removes a #{{id}} {name.lower()}'
 """)
     print(f"{GREEN}Resource '{name}' created at: {resource_dir}{RESET}")
+    # main.py를 자동으로 업데이트하여 새 서비스 추가
+    update_main_for_service(name)
 
 def generate_component(component_type, name):
     if component_type == "res":
@@ -663,10 +706,12 @@ def install_dependencies(args):
     modules_path = os.path.join(os.getcwd(), "ezy_modules")
     if not os.path.exists(modules_path):
         os.makedirs(modules_path)
-    print(f"{YELLOW}Installing dependencies into ezy_modules...{RESET}")
     for pkg, ver in packages_to_install.items():
-        print(f"{BLUE}Installing {pkg} ...{RESET}")
-        result = subprocess.run([sys.executable, "-m", "pip", "install", "--target", modules_path, pkg])
+        result = subprocess.run(
+            [sys.executable, "-m", "pip", "install", "--target", modules_path, pkg],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
         if result.returncode != 0:
             print(f"{RED}Failed to install {pkg}.{RESET}", file=sys.stderr)
             sys.exit(1)
@@ -725,10 +770,10 @@ def main():
     lint_parser.set_defaults(func=lambda args: lint_project())
     info_parser = subparsers.add_parser("info", help="Show CLI and system information")
     info_parser.set_defaults(func=lambda args: info_project())
-    update_parser = subparsers.add_parser("update", help="Update the CLI (simulation)")
+    update_parser = subparsers.add_parser("updte", help="Update the CLI (simulation)")
     update_parser.set_defaults(func=lambda args: update_cli())
     args = parser.parse_args()
-    if not args.command:
+    if not args.command: 
         parser.print_help()
         sys.exit(1)
     args.func(args)
