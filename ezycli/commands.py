@@ -85,6 +85,45 @@ def spinner_task(stop_event):
         idx += 1
     print(f"\r{GREEN}✔ Dependencies installed successfully.            {RESET}")
 
+def update_main_for_service(name):
+    main_path = os.path.join(os.getcwd(), "main.py")
+    if not os.path.exists(main_path):
+        return  # main.py가 없으면 업데이트하지 않음.
+    service_import = f"from {name.lower()}.{name.lower()}_service import {name.capitalize()}Service"
+    service_add = f"    app.add_service({name.capitalize()}Service)"
+    try:
+        with open(main_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+    except Exception as e:
+        print(f"{RED}Error reading main.py: {e}{RESET}", file=sys.stderr)
+        return
+
+    # import 구문이 존재하는지 확인, 없으면 추가
+    import_exists = any(service_import in line for line in lines)
+    if not import_exists:
+        insert_idx = 0
+        for i, line in enumerate(lines):
+            if line.startswith("from") or line.startswith("import"):
+                insert_idx = i + 1
+            else:
+                break
+        lines.insert(insert_idx, service_import + "\n")
+    
+    # add_service 호출이 존재하는지 확인, 없으면 추가
+    add_exists = any(service_add.strip() in line.strip() for line in lines)
+    if not add_exists:
+        for i, line in enumerate(lines):
+            if "app.run(" in line:
+                lines.insert(i, service_add + "\n")
+                break
+
+    try:
+        with open(main_path, "w", encoding="utf-8") as f:
+            f.writelines(lines)
+        print(f"{GREEN}Updated main.py with {name.capitalize()}Service.{RESET}")
+    except Exception as e:
+        print(f"{RED}Error updating main.py: {e}{RESET}", file=sys.stderr)
+
 def new_project(project_name):
     project_path = os.path.join(os.getcwd(), project_name)
     if os.path.exists(project_path):
@@ -96,11 +135,298 @@ def new_project(project_name):
     os.makedirs(os.path.join(project_path, "ezy_modules"))
     gitignore_path = os.path.join(project_path, ".gitignore")
     with open(gitignore_path, "w", encoding="utf-8") as f:
-        f.write(""".venv
+        f.write("""# Created by https://www.toptal.com/developers/gitignore/api/intellij,visualstudiocode,python,git
+# Edit at https://www.toptal.com/developers/gitignore?templates=intellij,visualstudiocode,python,git
+
+### Git ###
+# Created by git for backups. To disable backups in Git:
+# $ git config --global mergetool.keepBackup false
+*.orig
+
+# Created by git when using merge tools for conflicts
+*.BACKUP.*
+*.BASE.*
+*.LOCAL.*
+*.REMOTE.*
+*_BACKUP_*.txt
+*_BASE_*.txt
+*_LOCAL_*.txt
+*_REMOTE_*.txt
+
 ezy_modules/
+
+### Intellij ###
+# Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
+# Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
+
+# User-specific stuff
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+.idea/**/shelf
+
+# AWS User-specific
+.idea/**/aws.xml
+
+# Generated files
+.idea/**/contentModel.xml
+
+# Sensitive or high-churn files
+.idea/**/dataSources/
+.idea/**/dataSources.ids
+.idea/**/dataSources.local.xml
+.idea/**/sqlDataSources.xml
+.idea/**/dynamic.xml
+.idea/**/uiDesigner.xml
+.idea/**/dbnavigator.xml
+
+# Gradle
+.idea/**/gradle.xml
+.idea/**/libraries
+
+# Gradle and Maven with auto-import
+# When using Gradle or Maven with auto-import, you should exclude module files,
+# since they will be recreated, and may cause churn.  Uncomment if using
+# auto-import.
+# .idea/artifacts
+# .idea/compiler.xml
+# .idea/jarRepositories.xml
+# .idea/modules.xml
+# .idea/*.iml
+# .idea/modules
+# *.iml
+
+# CMake
+cmake-build-*/
+
+# Mongo Explorer plugin
+.idea/**/mongoSettings.xml
+
+# File-based project format
+*.iws
+
+# IntelliJ
+out/
+
+# mpeltonen/sbt-idea plugin
+.idea_modules/
+
+# JIRA plugin
+atlassian-ide-plugin.xml
+
+# Cursive Clojure plugin
+.idea/replstate.xml
+
+# SonarLint plugin
+.idea/sonarlint/
+
+# Crashlytics plugin (for Android Studio and IntelliJ)
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
+
+# Editor-based Rest Client
+.idea/httpRequests
+
+# Android studio 3.1+ serialized cache file
+.idea/caches/build_file_checksums.ser
+
+### Intellij Patch ###
+# Comment Reason: https://github.com/joeblau/gitignore.io/issues/186#issuecomment-215987721
+
+# *.iml
+# modules.xml
+# .idea/misc.xml
+# *.ipr
+
+# Sonarlint plugin
+# https://plugins.jetbrains.com/plugin/7973-sonarlint
+.idea/**/sonarlint/
+
+# SonarQube Plugin
+# https://plugins.jetbrains.com/plugin/7238-sonarqube-community-plugin
+.idea/**/sonarIssues.xml
+
+# Markdown Navigator plugin
+# https://plugins.jetbrains.com/plugin/7896-markdown-navigator-enhanced
+.idea/**/markdown-navigator.xml
+.idea/**/markdown-navigator-enh.xml
+.idea/**/markdown-navigator/
+
+# Cache file creation bug
+# See https://youtrack.jetbrains.com/issue/JBR-2257
+.idea/$CACHE_FILE$
+
+# CodeStream plugin
+# https://plugins.jetbrains.com/plugin/12206-codestream
+.idea/codestream.xml
+
+# Azure Toolkit for IntelliJ plugin
+# https://plugins.jetbrains.com/plugin/8053-azure-toolkit-for-intellij
+.idea/**/azureSettings.xml
+
+### Python ###
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+# .python-version
+
+# pipenv
+#Pipfile.lock
+
+# poetry
+#poetry.lock
+
+# pdm
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
 .env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# PyCharm
+#.idea/
+
+### Python Patch ###
+poetry.toml
+.ruff_cache/
+pyrightconfig.json
+
+### VisualStudioCode ###
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+.history/
+*.vsix
+
+### VisualStudioCode Patch ###
+.history
+.ionide
 """)
     print_create_message(gitignore_path)
     default_packages = [
@@ -178,13 +504,21 @@ def generate_resource(name):
     except Exception:
         pass
     base_dir = os.getcwd()
+    
+    # 루트 디렉토리에 __init__.py가 없는 경우 생성
+    root_init = os.path.join(base_dir, "__init__.py")
+    if not os.path.exists(root_init):
+        with open(root_init, "w", encoding="utf-8") as f:
+            f.write("")
+        print(f"{GREEN}CREATE {root_init} (0 bytes){RESET}")
+    
     resource_dir = os.path.join(base_dir, name.lower())
     if os.path.exists(resource_dir):
         print(f"{RED}Error: Resource folder already exists: {resource_dir}{RESET}", file=sys.stderr)
         sys.exit(1)
     os.makedirs(resource_dir)
     transport = input(f"{YELLOW}What transport layer do you use? [REST API]: {RESET}") or "REST API"
-    crud_answer = input(f"{YELLOW}Would you like to generate CRUD entry points? [Yes/No]: {RESET}").strip().lower()
+    crud_answer = input(f"{YELLOW}Would you like to generate CRUD entry points? [Yes/No]: {RESET}").strip().lower() or "yes"
     crud = crud_answer in ["yes", "y"]
     if not crud:
         service_path = os.path.join(resource_dir, f"{name.lower()}_service.py")
@@ -196,6 +530,7 @@ class {name.capitalize()}Service(EzyService):
     pass
 """)
         print(f"{GREEN}Resource '{name}' created at: {resource_dir}{RESET}")
+        update_main_for_service(name)
         return
     with open(os.path.join(resource_dir, "__init__.py"), "w", encoding="utf-8") as f:
         f.write("")
@@ -207,33 +542,35 @@ class {name.capitalize()}Service(EzyService):
     os.makedirs(entity_dir)
     with open(os.path.join(entity_dir, "__init__.py"), "w", encoding="utf-8") as f:
         f.write("")
-    create_dto_path = os.path.join(dto_dir, f"create_{name.lower()}_dto.py")
+    # DTO 파일 이름 변경: <resource>_create_dto.py, <resource>_update_dto.py
+    create_dto_path = os.path.join(dto_dir, f"{name.lower()}_create_dto.py")
     with open(create_dto_path, "w", encoding="utf-8") as f:
         f.write(f"""from pydantic import BaseModel
 
 class {name.capitalize()}CreateDTO(BaseModel):
     pass
 """)
-    update_dto_path = os.path.join(dto_dir, f"update_{name.lower()}_dto.py")
+    update_dto_path = os.path.join(dto_dir, f"{name.lower()}_update_dto.py")
     with open(update_dto_path, "w", encoding="utf-8") as f:
         f.write(f"""from pydantic import BaseModel
 
 class {name.capitalize()}UpdateDTO(BaseModel):
     pass
 """)
+    # Entity 템플릿 수정: EzyEntityBase를 상속하지 않음
     entity_path = os.path.join(entity_dir, f"{name.lower()}_entity.py")
     with open(entity_path, "w", encoding="utf-8") as f:
         f.write(f"""from ezyapi.database import EzyEntityBase
 
-class {name.capitalize()}Entity(EzyEntityBase):
+class {name.capitalize()}Entity():
     pass
 """)
     service_path = os.path.join(resource_dir, f"{name.lower()}_service.py")
     with open(service_path, "w", encoding="utf-8") as f:
         f.write(f"""# Transport layer: {transport}
 from ezyapi import EzyService
-from {name.lower()}.dto.create_{name.lower()}_dto import {name.capitalize()}CreateDTO
-from {name.lower()}.dto.update_{name.lower()}_dto import {name.capitalize()}UpdateDTO
+from {name.lower()}.dto.{name.lower()}_create_dto import {name.capitalize()}CreateDTO
+from {name.lower()}.dto.{name.lower()}_update_dto import {name.capitalize()}UpdateDTO
 from {name.lower()}.entity.{name.lower()}_entity import {name.capitalize()}Entity
 
 class {name.capitalize()}Service(EzyService):
@@ -253,6 +590,8 @@ class {name.capitalize()}Service(EzyService):
         return f'This action removes a #{{id}} {name.lower()}'
 """)
     print(f"{GREEN}Resource '{name}' created at: {resource_dir}{RESET}")
+    # main.py를 자동으로 업데이트하여 새 서비스 추가
+    update_main_for_service(name)
 
 def generate_component(component_type, name):
     if component_type == "res":
@@ -368,14 +707,30 @@ def install_dependencies(args):
     if not os.path.exists(modules_path):
         os.makedirs(modules_path)
     print(f"{YELLOW}Installing dependencies into ezy_modules...{RESET}")
-    for pkg, ver in packages_to_install.items():
-        print(f"{BLUE}Installing {pkg} ...{RESET}")
-        result = subprocess.run([sys.executable, "-m", "pip", "install", "--target", modules_path, pkg])
-        if result.returncode != 0:
-            print(f"{RED}Failed to install {pkg}.{RESET}", file=sys.stderr)
-            sys.exit(1)
-    print(f"{GREEN}Dependencies installed successfully.{RESET}")
+    stop_event = threading.Event()
+    spinner_thread = threading.Thread(target=spinner_task, args=(stop_event,))
+    spinner_thread.start()
+    try:
+        for pkg, ver in packages_to_install.items():
+            result = subprocess.run(
+                [sys.executable, "-m", "pip", "install", "--target", modules_path, pkg],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            if result.returncode != 0:
+                stop_event.set()
+                spinner_thread.join()
+                print(f"{RED}Failed to install {pkg}.{RESET}", file=sys.stderr)
+                sys.exit(1)
+    except KeyboardInterrupt:
+        stop_event.set()
+        spinner_thread.join()
+        print(f"\n{YELLOW}Installation cancelled by user.{RESET}")
+        sys.exit(1)
+    stop_event.set()
+    spinner_thread.join()
     update_dependencies_json(modules_path, config_path)
+
 
 def run_script(args):
     config_path = os.path.join(os.getcwd(), "ezy.json")
@@ -429,10 +784,10 @@ def main():
     lint_parser.set_defaults(func=lambda args: lint_project())
     info_parser = subparsers.add_parser("info", help="Show CLI and system information")
     info_parser.set_defaults(func=lambda args: info_project())
-    update_parser = subparsers.add_parser("update", help="Update the CLI (simulation)")
+    update_parser = subparsers.add_parser("updte", help="Update the CLI (simulation)")
     update_parser.set_defaults(func=lambda args: update_cli())
     args = parser.parse_args()
-    if not args.command:
+    if not args.command: 
         parser.print_help()
         sys.exit(1)
     args.func(args)
