@@ -710,20 +710,27 @@ def install_dependencies(args):
     stop_event = threading.Event()
     spinner_thread = threading.Thread(target=spinner_task, args=(stop_event,))
     spinner_thread.start()
-    for pkg, ver in packages_to_install.items():
-        result = subprocess.run(
-            [sys.executable, "-m", "pip", "install", "--target", modules_path, pkg],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
-        )
-        if result.returncode != 0:
-            stop_event.set()
-            spinner_thread.join()
-            print(f"{RED}Failed to install {pkg}.{RESET}", file=sys.stderr)
-            sys.exit(1)
+    try:
+        for pkg, ver in packages_to_install.items():
+            result = subprocess.run(
+                [sys.executable, "-m", "pip", "install", "--target", modules_path, pkg],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            if result.returncode != 0:
+                stop_event.set()
+                spinner_thread.join()
+                print(f"{RED}Failed to install {pkg}.{RESET}", file=sys.stderr)
+                sys.exit(1)
+    except KeyboardInterrupt:
+        stop_event.set()
+        spinner_thread.join()
+        print(f"\n{YELLOW}Installation cancelled by user.{RESET}")
+        sys.exit(1)
     stop_event.set()
     spinner_thread.join()
     update_dependencies_json(modules_path, config_path)
+
 
 def run_script(args):
     config_path = os.path.join(os.getcwd(), "ezy.json")
