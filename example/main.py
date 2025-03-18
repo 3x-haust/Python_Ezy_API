@@ -1,7 +1,7 @@
 from ezyapi import EzyAPI
 from ezyapi.database import DatabaseConfig
-from example.user.user_service import UserService
-from example.app_service import AppService
+from user.user_service import UserService
+from app_service import AppService
 
 if __name__ == "__main__":
     app = EzyAPI(
