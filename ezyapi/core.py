@@ -116,7 +116,6 @@ class EzyAPI:
                 elif '{' + param_name + '}' in path:
                     path_params.append(param_name)
                 else:
-                    # Store default value if it exists
                     default_value = param.default if param.default is not param.empty else None
                     query_params[param_name] = {
                         'type': param_type,
@@ -125,19 +124,31 @@ class EzyAPI:
                     }
 
             if request_body:
-                async def endpoint_with_body(data: request_body, service_instance=service_instance, method=method):
-                    return await method(service_instance, data=data)
+                async def endpoint_with_body(
+                    data: request_body,
+                    request: Request,
+                    service_instance=service_instance, 
+                    method=method,
+                    path_params=path_params
+                ):
+                    call_args = {'data': data}
+                    
+                    for param in path_params:
+                        call_args[param] = self._convert_param_type(
+                            request.path_params.get(param), 
+                            param_types.get(param, Any)
+                        )
+                        
+                    return await method(service_instance, **call_args)
                 func = endpoint_with_body
             elif path_params or query_params:
                 async def endpoint_with_params(request: Request, service_instance=service_instance, method=method, 
                                             path_params=path_params, query_params=query_params, param_types=param_types):
                     call_args = {}
                     
-                    # Process path parameters
                     for param in path_params:
                         call_args[param] = self._convert_param_type(request.path_params.get(param), param_types.get(param, Any))
                     
-                    # Process query parameters
                     for param_name, param_info in query_params.items():
                         value = request.query_params.get(param_name)
                         if value is not None:
@@ -145,7 +156,6 @@ class EzyAPI:
                         elif not param_info['required']:
                             call_args[param_name] = param_info['default']
                         elif param_info['required']:
-                            # Handle required parameters missing from request
                             if param_info['type'] == Optional:
                                 call_args[param_name] = None
                             else:
@@ -173,10 +183,12 @@ class EzyAPI:
     
     def _parse_method_name(self, method_name: str, service_name: str) -> tuple:
         http_methods = {
-            'get': 'get', 'find': 'get', 'retrieve': 'get', 'list': 'get',
-            'create': 'post', 'add': 'post', 'update': 'put',
-            'edit': 'patch', 'modify': 'patch',
-            'delete': 'delete', 'remove': 'delete'
+            'get': 'get',
+            'list': 'get',
+            'create': 'post',
+            'update': 'put',
+            'edit': 'patch',
+            'delete': 'delete'
         }
         
         method_parts = method_name.split('_')
