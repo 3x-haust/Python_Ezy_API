@@ -1,7 +1,3 @@
-물론이죠! 아래는 요청하신 README의 영어 버전입니다:
-
----
-
 This is the Korean version of the README.  
 [여기를 클릭하여 한국어 버전을 확인하세요.](./README-ko.md)
 
@@ -249,7 +245,3 @@ GET /name/Alice
 
 
 # CLI Overview
-
----
-
-필요하면 CLI 개요 부분도 영어로 이어서 번역해드릴까요?
