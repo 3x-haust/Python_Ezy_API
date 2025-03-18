@@ -1,10 +1,10 @@
 from ezyapi.core import route
 from fastapi import HTTPException
-from typing import List
+from typing import List, Optional
 
-from example.user.dto.user_response_dto import UserResponseDTO
-from example.user.dto.user_create_dto import UserCreateDTO
-from example.user.entity import UserEntity
+from user.dto.user_response_dto import UserResponseDTO
+from user.dto.user_create_dto import UserCreateDTO
+from user.entity import UserEntity
 
 from ezyapi import EzyService
 
@@ -26,8 +26,15 @@ class UserService(EzyService):
         
         return UserResponseDTO(id=user.id, name=user.name, email=user.email, age=user.age)
     
-    async def list_users(self) -> List[UserResponseDTO]:
-        users = await self.repository.find()
+    async def list_users(self, name: Optional[str] = None, age: Optional[int] = None) -> List[UserResponseDTO]:
+        filters = {}
+        if age is not None:
+            filters["age"] = age
+
+        if name is not None:
+            filters["name"] = name
+
+        users = await self.repository.find(where=filters)
         return [
             UserResponseDTO(id=user.id, name=user.name, email=user.email, age=user.age)
             for user in users
