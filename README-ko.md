@@ -90,6 +90,9 @@ Ezy API에서 **서비스(Service)** 는 요청을 처리하고 비즈니스 로
 
 서비스는 `EzyService` 클래스를 상속받아 생성됩니다.  
 아래는 기본적인 서비스의 예시입니다.
+> **팁**
+>
+> 서비스는 ```$ ezy g res user``` 사용해 생성 할 수 있습니다
 
 ```python
 # app_service.py

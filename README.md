@@ -1,63 +1,60 @@
-This is the Korean version of the README.  
-[여기를 클릭하여 한국어 버전을 확인하세요.](./README-ko.md)
-
-# First Steps
+# First Step
 
 ### Background
 
-We love [Nest.js](https://nestjs.com/), but we felt that Controllers and Modules in [Nest.js](https://nestjs.com/) can be excessive for simple tasks.
+We love [Nest.js](https://nestjs.com/), but we felt that the Controller and Module in [Nest.js](https://nestjs.com/) are unnecessary for simple tasks.
 
 ### Getting Started
 
-In this document, you will learn about the **core principles** of Ezy API. To fully understand the essential components of an Ezy API application, we will cover a broad range of basic topics and build a simple CRUD application.
+In this document, we will explore the **core principles** of Ezy API. To familiarize yourself with the essential components of an Ezy API application, you should build a basic CRUD application covering various areas at a basic level.
 
 #### Language
 
-Ezy API is built using the [Python](https://www.python.org/) programming language.
+Ezy API uses the [Python](https://www.python.org/) language.
 
-We plan to support other languages such as [TypeScript](https://www.typescriptlang.org/) and [Java](https://java.com/) in the future.
+In the future, we plan to support languages like [TypeScript](https://www.typescriptlang.org/) and [Java](https://java.com/).
 
 #### Prerequisites
 
-Ensure that you have [Python](https://www.python.org/) (>= 3.6) installed on your operating system.
+Make sure you have [Python](https://www.python.org/) (>= 3.6) installed on your operating system.
 
 #### Setup
 
-Setting up a new project with the [Ezy API CLI](#cli-overview) is very simple. If you have [pip](https://pypi.org/project/pip/) installed, you can create a new Ezy API project from your terminal using the following commands:
+Setting up a new project with the [Ezy API CLI](#cli-overview) is very simple. If [pip](https://pypi.org/project/pip/) is installed, you can create a new Ezy API project in the OS terminal with the following command:
 
 ```bash
 $ pip install ezyapi
 $ ezy new project-name
 ```
 
-This will create a `project-name` directory containing `main.py` and CLI configuration files.
+A directory called `project-name` will be created along with a `main.py` and CLI configuration files.
 
-The basic structure of the project will look like this:
+The basic structure of the project looks like this:
 ```
 app_service.py
 ezy.json
 main.py
 ```
 
-> **Tip**
+> **Tip**  
 > 
-> You can check out the above files [here](https://github.com/3x-haust/Python_Ezy_API/tree/main/example).
+> You can view these files [here](https://github.com/3x-haust/Python_Ezy_API/tree/main/example).
 
 <br></br>
 
-Here’s a brief explanation of these core files:
+Here is a brief description of the core files:
 
-|Filename|Description|
-|:---:|:---|
-|`app_service.py`|Basic service file|
-|`ezy.json`|CLI command configuration file|
-|`main.py`|Entry file. Creates an Ezy API application instance using the `EzyAPI` core function.|
+| Filename       | Description |
+|:--------------:|:----------:|
+| `app_service.py` | Basic service file |
+| `ezy.json`       | CLI command configuration file |
+| `main.py`        | Entry point. Creates an Ezy API application instance using the core function `EzyAPI`. |
 
-> Don’t worry if you don’t fully understand services yet! Detailed explanations will follow in the next chapters.
+> You don't need to fully understand services and other components at this stage. Detailed explanations will follow in upcoming chapters!
 
 <br><br/>
 
-Let’s start by creating a simple `main.py` file, which contains the main module to launch the application.
+Let’s start with creating a simple `main.py` file. This file contains the main module that starts the application.
 
 ```python
 # main.py
@@ -73,22 +70,27 @@ if __name__ == "__main__":
 
 ### Running the Application
 
-You can run the application from your terminal with the following command:
+You can run the application with the following command in the OS terminal:
+
 ```bash
 $ ezy run start
 ```
 
-# Service
+# Services
 
 ### What is a Service?
 
-In Ezy API, a **Service** is a core component that handles requests and executes business logic.  
-It plays a similar role to Controllers or Services in [Nest.js](https://nestjs.com/), but Ezy API is designed to be more concise and intuitive, allowing you to build APIs using services alone.
+In Ezy API, a **Service** is the core component responsible for processing requests and performing business logic.  
+It functions similarly to [Nest.js](https://nestjs.com)'s Controller and Service, but Ezy API is designed to allow you to build an API with just services in a much more concise and intuitive way.
 
 ### Service Structure
 
-A service is created by extending the `EzyService` class.  
+Services are created by inheriting the `EzyService` class.  
 Here’s an example of a basic service:
+
+> **Tip**  
+> 
+> You can generate a service using ```$ ezy g res user```
 
 ```python
 # app_service.py
@@ -99,33 +101,33 @@ class AppService(EzyService):
         return "Hello, World!"
 ```
 
-- By extending `EzyService`, you can define API endpoints directly as asynchronous functions inside the service.
+- By inheriting `EzyService`, you can define API endpoints as asynchronous functions within the service.
 - The function name automatically becomes the API endpoint URL.
-  - For example, a function named `get_user` will automatically map to the `GET` method at `/user/`.
-  - If the service name is `app`, it will map to the root (`/`) path.
-- Functions should be defined as `async` for asynchronous processing.
+  - For example, the `get_user` function is automatically mapped to the `/user/` path with the `GET` method.
+    - However, if the service name is `app`, it is mapped to the root path.
+- Functions are defined as `async` to allow asynchronous processing.
 
 ### URL Mapping Rules
 
-Function names are automatically mapped to URL endpoints as follows:
+The function name in a service is automatically mapped to a URL endpoint.
 
-| Function | HTTP Method | URL |
-|:---:|:---:|:---|
-|`get_user`|GET|`/user/`|
-|`list_users`|GET|`/user/`|
-|`create_user`|POST|`/user/`|
-|`update_user`|PUT|`/user/`|
-|`delete_user`|DELETE|`/user/`|
-|`edit_user`|PATCH|`/user/`|
+| Function Name    | HTTP Method | URL          |
+|:----------------:|:-----------:|:------------:|
+| `get_user`       | GET         | `/user/`     |
+| `list_users`     | GET         | `/user/`     |
+| `create_user`    | POST        | `/user/`     |
+| `update_user`    | PUT         | `/user/`     |
+| `delete_user`    | DELETE      | `/user/`     |
+| `edit_user`      | PATCH       | `/user/`     |
 
-> **Tip**
+> **Tip**  
 > 
-> Methods like `get`, `update`, `delete`, and `edit` can use route parameters such as `by_id`.
-> Example: `get_user_by_id` ➡️ `GET /user/{id}`
+> Methods like `get`, `update`, `delete`, `edit` can use path parameters like `by_id`, etc.  
+> For example: `get_user_by_id` ➡️ `GET /user/{id}`
 
 ### Registering a Service
 
-You can register your service in `main.py` by adding it to the EzyAPI instance.
+Services can be registered to the EzyAPI instance in `main.py`:
 
 ```python
 # main.py
@@ -137,11 +139,12 @@ if __name__ == "__main__":
     app.add_service(AppService)
     app.run(port=8000)
 ```
+
 ---
 
-### Example: Path Parameters
+### Path Parameter Example
 
-In Ezy API, adding `by_id`, `by_name`, etc., to a function name will automatically map it to a URL path parameter.
+Ezy API automatically maps path parameters to the URL when you add `by_id`, `by_name`, etc., to a function name.
 
 ```python
 # user_service.py
@@ -152,8 +155,8 @@ class UserService(EzyService):
         return {"id": id, "name": "John Doe"}
 ```
 
-- `get_user_by_id` ➡️ automatically maps to `GET /user/{id}`.
-- The `id` parameter is extracted from the URL path.
+- `get_user_by_id` ➡️ `GET /user/{id}` is automatically mapped.
+- The `id` is used as a path parameter in the URL.
 
 **Request Example**
 ```http
@@ -168,9 +171,9 @@ GET /user/10
 }
 ```
 
-### Example: Query Parameters
+### Query Parameter Example
 
-You can define optional parameters to accept query strings.
+Query parameters can be received as query strings by defining `Optional` and default values for function arguments.
 
 ```python
 # user_service.py
@@ -188,8 +191,8 @@ class UserService(EzyService):
         return [{"id": 1, "name": name or "John", "age": age or 25}]
 ```
 
-- `list_users` ➡️ maps to `GET /user/`.
-- `name` and `age` can be passed via query strings.
+- `list_users` ➡️ `GET /user/`
+- You can pass `name` and `age` as query parameters.
 
 **Request Example**
 ```http
@@ -209,9 +212,9 @@ GET /user/?name=Alice&age=30
 
 ---
 
-### Example: @route Decorator
+### Decorator Example (@route)
 
-You can use the `@route()` decorator to manually define URLs and HTTP methods.
+You can manually specify the URL and method by using the `@route()` decorator on a service function.
 
 ```python
 # user_service.py
@@ -224,8 +227,8 @@ class UserService(EzyService):
         return {"name": name, "email": "example@example.com"}
 ```
 
-- `@route('get', '/name/{name}')` ➡️ sets the route to `GET /name/{name}`.
-- `description` is used for API documentation.
+- `@route('get', '/name/{name}')` ➡️ `GET /name/{name}` is mapped.
+- The `description` is used for API documentation.
 
 **Request Example**
 ```http
@@ -241,7 +244,7 @@ GET /name/Alice
 ```
 
 > **Note**  
-> Using `@route()` overrides automatic mapping, allowing full control over URL and HTTP method.
+> Using the `@route()` decorator overrides automatic mapping, allowing you to freely set the desired URL and HTTP method.
 
 
 # CLI Overview
