@@ -61,7 +61,7 @@ main.py
 간단하게 main.py 파일부터 만들어 보겠습니다. 해당 파일에는 어플리케이션을 시작해주는 main 모듈이 있습니다.
 
 ```python
-//main.py
+# main.py
 from ezyapi import EzyAPI
 from ezyapi.database import DatabaseConfig
 from user.user_service import UserService
