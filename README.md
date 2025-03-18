@@ -1,3 +1,6 @@
+This is the Korean version of the README.  
+[여기를 클릭하여 한국어 버전을 확인하세요.](./README-ko.md)
+
 # First Step
 
 ### Background
