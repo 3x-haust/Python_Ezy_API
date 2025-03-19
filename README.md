@@ -8,8 +8,6 @@ This is the Korean version of the README.
 [![PyPI](https://img.shields.io/pypi/v/ezyapi?logo=PyPI?style=flat)](https://pypi.org/project/ezyapi/)
 
 </br>
-</br>
-</br>
 
 # Table of Contents
 
@@ -39,6 +37,10 @@ This is the Korean version of the README.
     - [Query Parameter Example](#query-parameter-example)
     - [Decorator Example (@route)](#decorator-example-route)
 - [CLI Overview](#cli-overview)
+  
+</br>
+</br>
+</br>
 
 # Contribution Guide
 
