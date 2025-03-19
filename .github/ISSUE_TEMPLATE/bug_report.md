@@ -2,8 +2,10 @@
 name: Bug report
 about: Create a report to help us improve
 title: "[BUG]"
-labels: ''
-assignees: 3x-haust
+labels: ["bug"]
+assignees:
+  - 3x-haust
+  - nck90
 
 ---
 
