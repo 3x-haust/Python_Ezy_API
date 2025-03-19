@@ -30,7 +30,7 @@ $ pip install ezyapi
 $ ezy new project-name
 ```
 
-A directory called `project-name` will be created along with a `main.py` and CLI configuration files.
+A directory called `project-name` will be created along with a `main.py` and CLI configuration files. 
 
 The basic structure of the project looks like this:
 ```
