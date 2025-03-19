@@ -8,8 +8,6 @@
 [![PyPI](https://img.shields.io/pypi/v/ezyapi?logo=PyPI?style=flat)](https://pypi.org/project/ezyapi/)
 
 </br>
-</br>
-</br>
 
 # 목차
 - [목차](#목차)
