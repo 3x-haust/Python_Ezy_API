@@ -1,10 +1,6 @@
 This is the Korean version of the README.  
 [여기를 클릭하여 한국어 버전을 확인하세요.](./README-ko.md)
 
-</br>
-</br>
-</br>
-
 ![Contributors](https://img.shields.io/github/contributors/3x-haust/Python_Ezy_API?style=flat)
 ![Forks](https://img.shields.io/github/forks/3x-haust/Python_Ezy_API?style=social?style=flat)
 [![Stars](https://img.shields.io/github/stars/3x-haust/Python_Ezy_API?style=flat&logo=GitHub&color=yellow)](https://github.com/3x-haust/Python_Ezy_API/stargazers)
