@@ -73,7 +73,8 @@ Name your branch according to the nature of your work.
 | `test/` | Adding or updating tests | `test/user-service-test` |
 | `chore/` | Build settings, package management, miscellaneous tasks | `chore/update-deps`, `chore/ci-config` |
 
-> **Tip**  
+> **Tip**
+> 
 > Branch names should clearly indicate the purpose of the work.
 
 ## Work and Commit

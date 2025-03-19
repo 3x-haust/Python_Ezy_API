@@ -72,7 +72,8 @@ $ git checkout -b feature/기능명
 | `test/` | 테스트 코드 추가 및 수정 | `test/user-service-test` |
 | `chore/` | 빌드 설정, 패키지 관리, 기타 잡무 | `chore/update-deps`, `chore/ci-config` |
 
-> **팁**  
+> **팁**
+> 
 > 브랜치명은 작업 내용을 명확하게 드러내는 것이 좋습니다.
 
 
