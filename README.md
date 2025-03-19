@@ -1,6 +1,115 @@
 This is the Korean version of the README.  
 [여기를 클릭하여 한국어 버전을 확인하세요.](./README-ko.md)
 
+![Contributors](https://img.shields.io/github/contributors/3x-haust/Python_Ezy_API?style=flat)
+![Forks](https://img.shields.io/github/forks/3x-haust/Python_Ezy_API?style=social?style=flat)
+[![Stars](https://img.shields.io/github/stars/3x-haust/Python_Ezy_API?style=flat&logo=GitHub&color=yellow)](https://github.com/3x-haust/Python_Ezy_API/stargazers)
+![License](https://img.shields.io/github/license/3x-haust/Python_Ezy_API?style=flat)
+[![PyPI](https://img.shields.io/pypi/v/ezyapi?logo=PyPI?style=flat)](https://pypi.org/project/ezyapi/)
+
+# Table of Contents
+
+- [Table of Contents](#table-of-contents)
+- [How to Contribute](#how-to-contribute)
+  - [Create a Branch](#create-a-branch)
+  - [Work and Commit](#work-and-commit)
+    - [Commit Message Convention](#commit-message-convention)
+    - [Commit Examples](#commit-examples)
+  - [Push to Remote Repository](#push-to-remote-repository)
+  - [Create a Pull Request (PR)](#create-a-pull-request-pr)
+  - [Merge](#merge)
+- [First Step](#first-step)
+    - [Background](#background)
+    - [Getting Started](#getting-started)
+      - [Language](#language)
+      - [Prerequisites](#prerequisites)
+      - [Setup](#setup)
+    - [Running the Application](#running-the-application)
+- [Services](#services)
+    - [What is a Service?](#what-is-a-service)
+    - [Service Structure](#service-structure)
+    - [URL Mapping Rules](#url-mapping-rules)
+    - [Registering a Service](#registering-a-service)
+    - [Path Parameter Example](#path-parameter-example)
+    - [Query Parameter Example](#query-parameter-example)
+    - [Decorator Example (@route)](#decorator-example-route)
+- [CLI Overview](#cli-overview)
+
+# How to Contribute
+
+Ezy API welcomes contributions from everyone!  
+Follow the steps below to get started easily.
+
+## Create a Branch
+
+Before starting a new task, please create a **branch**. Branches are usually named in the format `feature/{feature-name}`.
+
+```bash
+# Switch to the main branch and update to the latest version
+$ git checkout main
+$ git pull origin main
+
+# Create and switch to a new branch
+$ git checkout -b feature/feature-name
+```
+
+Example:
+```bash
+$ git checkout -b feature/add-user-api
+```
+
+> **Tip**  
+> 
+> It's best to use a clear and descriptive branch name.  
+> Example: `feature/login-api`, `feature/fix-routing`
+
+## Work and Commit
+
+Once you've completed your work, write your commit messages following the **commit conventions** below.
+
+### Commit Message Convention
+
+| Tag | Description |
+|:---:|:---|
+| `feat` | Add a new feature |
+| `fix` | Fix a bug |
+| `docs` | Update documentation (README, comments, etc.) |
+| `style` | Code formatting, typo fixes, non-functional changes |
+| `refactor` | Refactor code (internal improvements without changing behavior) |
+| `test` | Add or update tests |
+| `chore` | Maintenance tasks, build settings, dependency management, etc. |
+
+### Commit Examples
+```bash
+$ git commit -m "feat: add user API"
+$ git commit -m "fix: correct wrong router path"
+$ git commit -m "docs: add installation guide to README"
+```
+
+## Push to Remote Repository
+
+Push your branch to the remote repository.
+
+```bash
+$ git push origin feature/feature-name
+```
+
+## Create a Pull Request (PR)
+
+- Create a **Pull Request** on GitHub.
+- Briefly describe what you've worked on in the PR description.
+- Collaborate with your team for code reviews.
+
+## Merge
+
+- After reviews and approval, **merge into the main branch**.
+- Always sync your `main` branch before starting any new work.
+
+```bash
+$ git checkout main
+$ git pull origin main
+```
+
 # First Step
 
 ### Background
