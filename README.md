@@ -246,7 +246,8 @@ GET /name/Alice
 }
 ```
 
-> **Note**  
+> **Tip**  
+> 
 > Using the `@route()` decorator overrides automatic mapping, allowing you to freely set the desired URL and HTTP method.
 
 
