@@ -12,6 +12,7 @@
 - [목차](#목차)
 - [기여 방법](#기여-방법)
   - [브랜치 생성하기](#브랜치-생성하기)
+    - [브랜치 네이밍 규칙](#브랜치-네이밍-규칙)
   - [작업하고 커밋하기](#작업하고-커밋하기)
     - [커밋 메시지 컨벤션](#커밋-메시지-컨벤션)
     - [커밋 예시](#커밋-예시)
@@ -53,15 +54,21 @@ $ git pull origin main
 $ git checkout -b feature/기능명
 ```
 
-예시:
-```bash
-$ git checkout -b feature/add-user-api
-```
+### 브랜치 네이밍 규칙
+
+작업 성격에 맞게 브랜치명을 작성해 주세요.
+
+| 타입 | 설명 | 예시 |
+|:---:|:---|:---|
+| `feature/` | 새로운 기능 개발 | `feature/login-api`, `feature/add-user-api` |
+| `fix/` | 버그 수정 | `fix/login-bug`, `fix/routing-error` |
+| `docs/` | 문서 작업 (README, 주석 등) | `docs/update-readme`, `docs/api-docs` |
+| `refactor/` | 코드 리팩토링 | `refactor/login-service`, `refactor/db-helper` |
+| `test/` | 테스트 코드 추가 및 수정 | `test/user-service-test` |
+| `chore/` | 빌드 설정, 패키지 관리, 기타 잡무 | `chore/update-deps`, `chore/ci-config` |
 
 > **팁**  
-> 
-> 브랜치명은 작업 내용을 명확히 표현하는 게 좋습니다.  
-> 예: `feature/login-api`, `feature/fix-routing`
+> 브랜치명은 작업 내용을 명확하게 드러내는 것이 좋습니다.
 
 
 ## 작업하고 커밋하기

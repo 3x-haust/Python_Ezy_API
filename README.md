@@ -10,12 +10,13 @@ This is the Korean version of the README.
 # Table of Contents
 
 - [Table of Contents](#table-of-contents)
-- [How to Contribute](#how-to-contribute)
+- [Contribution Guide](#contribution-guide)
   - [Create a Branch](#create-a-branch)
+    - [Branch Naming Convention](#branch-naming-convention)
   - [Work and Commit](#work-and-commit)
     - [Commit Message Convention](#commit-message-convention)
     - [Commit Examples](#commit-examples)
-  - [Push to Remote Repository](#push-to-remote-repository)
+  - [Push to Remote](#push-to-remote)
   - [Create a Pull Request (PR)](#create-a-pull-request-pr)
   - [Merge](#merge)
 - [First Step](#first-step)
@@ -35,17 +36,17 @@ This is the Korean version of the README.
     - [Decorator Example (@route)](#decorator-example-route)
 - [CLI Overview](#cli-overview)
 
-# How to Contribute
+# Contribution Guide
 
-Ezy API welcomes contributions from everyone!  
-Follow the steps below to get started easily.
+Ezy API is open to contributions from everyone!  
+Feel free to follow the steps below to participate.
 
 ## Create a Branch
 
-Before starting a new task, please create a **branch**. Branches are usually named in the format `feature/{feature-name}`.
+When starting new work, please create a **branch**. Branches are usually named in the format `feature/{feature-name}`.
 
 ```bash
-# Switch to the main branch and update to the latest version
+# Switch to the main branch and sync with the latest version
 $ git checkout main
 $ git pull origin main
 
@@ -53,19 +54,25 @@ $ git pull origin main
 $ git checkout -b feature/feature-name
 ```
 
-Example:
-```bash
-$ git checkout -b feature/add-user-api
-```
+### Branch Naming Convention
+
+Name your branch according to the nature of your work.
+
+| Type | Description | Example |
+|:---:|:---|:---|
+| `feature/` | New feature development | `feature/login-api`, `feature/add-user-api` |
+| `fix/` | Bug fixes | `fix/login-bug`, `fix/routing-error` |
+| `docs/` | Documentation (README, comments, etc.) | `docs/update-readme`, `docs/api-docs` |
+| `refactor/` | Code refactoring | `refactor/login-service`, `refactor/db-helper` |
+| `test/` | Adding or updating tests | `test/user-service-test` |
+| `chore/` | Build settings, package management, miscellaneous tasks | `chore/update-deps`, `chore/ci-config` |
 
 > **Tip**  
-> 
-> It's best to use a clear and descriptive branch name.  
-> Example: `feature/login-api`, `feature/fix-routing`
+> Branch names should clearly indicate the purpose of the work.
 
 ## Work and Commit
 
-Once you've completed your work, write your commit messages following the **commit conventions** below.
+After completing your work, write a commit message following the **commit convention** below.
 
 ### Commit Message Convention
 
@@ -74,19 +81,19 @@ Once you've completed your work, write your commit messages following the **comm
 | `feat` | Add a new feature |
 | `fix` | Fix a bug |
 | `docs` | Update documentation (README, comments, etc.) |
-| `style` | Code formatting, typo fixes, non-functional changes |
-| `refactor` | Refactor code (internal improvements without changing behavior) |
+| `style` | Code formatting, typos, non-functional changes |
+| `refactor` | Code refactoring (internal improvements without behavior change) |
 | `test` | Add or update tests |
-| `chore` | Maintenance tasks, build settings, dependency management, etc. |
+| `chore` | Build tasks, package manager configuration, maintenance work |
 
 ### Commit Examples
 ```bash
 $ git commit -m "feat: add user API"
-$ git commit -m "fix: correct wrong router path"
+$ git commit -m "fix: fix incorrect router path"
 $ git commit -m "docs: add installation guide to README"
 ```
 
-## Push to Remote Repository
+## Push to Remote
 
 Push your branch to the remote repository.
 
@@ -97,13 +104,13 @@ $ git push origin feature/feature-name
 ## Create a Pull Request (PR)
 
 - Create a **Pull Request** on GitHub.
-- Briefly describe what you've worked on in the PR description.
-- Collaborate with your team for code reviews.
+- Briefly describe what you worked on in the PR description.
+- Then proceed with a code review with your team.
 
 ## Merge
 
-- After reviews and approval, **merge into the main branch**.
-- Always sync your `main` branch before starting any new work.
+- Once the review is complete and approved, **merge into the main branch**.
+- After merging, always make sure to sync your local `main` branch before starting new work.
 
 ```bash
 $ git checkout main
