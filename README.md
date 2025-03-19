@@ -1,11 +1,19 @@
 This is the Korean version of the README.  
 [여기를 클릭하여 한국어 버전을 확인하세요.](./README-ko.md)
 
+</br>
+</br>
+</br>
+
 ![Contributors](https://img.shields.io/github/contributors/3x-haust/Python_Ezy_API?style=flat)
 ![Forks](https://img.shields.io/github/forks/3x-haust/Python_Ezy_API?style=social?style=flat)
 [![Stars](https://img.shields.io/github/stars/3x-haust/Python_Ezy_API?style=flat&logo=GitHub&color=yellow)](https://github.com/3x-haust/Python_Ezy_API/stargazers)
 ![License](https://img.shields.io/github/license/3x-haust/Python_Ezy_API?style=flat)
 [![PyPI](https://img.shields.io/pypi/v/ezyapi?logo=PyPI?style=flat)](https://pypi.org/project/ezyapi/)
+
+</br>
+</br>
+</br>
 
 # Table of Contents
 
@@ -117,6 +125,10 @@ $ git checkout main
 $ git pull origin main
 ```
 
+</br>
+</br>
+</br>
+
 # First Step
 
 ### Background
@@ -194,6 +206,10 @@ You can run the application with the following command in the OS terminal:
 ```bash
 $ ezy run start
 ```
+
+</br>
+</br>
+</br>
 
 # Services
 
@@ -366,5 +382,8 @@ GET /name/Alice
 > 
 > Using the `@route()` decorator overrides automatic mapping, allowing you to freely set the desired URL and HTTP method.
 
+</br>
+</br>
+</br>
 
 # CLI Overview

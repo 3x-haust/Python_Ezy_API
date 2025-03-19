@@ -7,6 +7,9 @@
 ![License](https://img.shields.io/github/license/3x-haust/Python_Ezy_API?style=flat)
 [![PyPI](https://img.shields.io/pypi/v/ezyapi?logo=PyPI?style=flat)](https://pypi.org/project/ezyapi/)
 
+</br>
+</br>
+</br>
 
 # 목차
 - [목차](#목차)
@@ -35,6 +38,10 @@
     - [쿼리 파라미터 예시](#쿼리-파라미터-예시)
     - [데코레이터 예시 (@route)](#데코레이터-예시-route)
 - [CLI 개요](#cli-개요)
+
+</br>
+</br>
+</br>
 
 # 기여 방법
 
@@ -118,6 +125,10 @@ $ git checkout main
 $ git pull origin main
 ```
 
+</br>
+</br>
+</br>
+
 # 첫 번째 단계
 
 ### 배경
@@ -196,6 +207,10 @@ OS 터미널에서 다음 명령을 어플리케이션을 실행할 수 있습�
 $ ezy run start
 ```
 
+</br>
+</br>
+</br>
+
 # 서비스
 
 ### 서비스란?
@@ -258,7 +273,6 @@ if __name__ == "__main__":
     app.add_service(AppService)
     app.run(port=8000)
 ```
----
 
 ### 경로 파라미터 예시
 
@@ -328,8 +342,6 @@ GET /user/?name=Alice&age=30
 ]
 ```
 
----
-
 ### 데코레이터 예시 (@route)
 
 서비스 함수에 직접 `@route()` 데코레이터를 사용하면 URL과 메서드를 수동으로 지정할 수 있습니다.
@@ -365,5 +377,8 @@ GET /name/Alice
 > 
 > `@route()` 데코레이터를 사용하면 자동 매핑을 오버라이드하여 원하는 URL, HTTP 메서드를 자유롭게 설정할 수 있습니다.
 
+</br>
+</br>
+</br>
 
 # CLI 개요
