@@ -1,4 +1,4 @@
-This is the Korean version of the README.  
+This is the English version of the README.  
 [여기를 클릭하여 한국어 버전을 확인하세요.](./README-ko.md)
 
 ![Contributors](https://img.shields.io/github/contributors/3x-haust/Python_Ezy_API?style=flat)
