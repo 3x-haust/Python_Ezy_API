@@ -310,3 +310,5 @@ pyrightconfig.json
 *.db
 
 .DS_Store
+ezy_modules
+bash.sh

@@ -1,10 +1,11 @@
 from ezyapi.core import route
 from fastapi import HTTPException
-from typing import List
+from typing import List, Optional
 
-from example.user.dto.user_response_dto import UserResponseDTO
-from example.user.dto.user_create_dto import UserCreateDTO
-from example.user.entity import UserEntity
+from user.dto.user_update_dto import UserUpdateDTO
+from user.dto.user_response_dto import UserResponseDTO
+from user.dto.user_create_dto import UserCreateDTO
+from user.entity import UserEntity
 
 from ezyapi import EzyService
 
@@ -18,16 +19,43 @@ class UserService(EzyService):
         
         return UserResponseDTO(id=user.id, name=user.name, email=user.email, age=user.age)
 
+    async def edit_user_by_id(self, id: int, data: UserUpdateDTO) -> UserResponseDTO:
+        user = await self.repository.find_one(where={"id": id})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        if data.name is not None:
+            user.name = data.name
+        if data.email is not None:
+            user.email = data.email
+        if data.age is not None:
+            user.age = data.age
+
+        updated_user = await self.repository.save(user)
+
+        return UserResponseDTO(
+            id=updated_user.id, name=updated_user.name,
+            email=updated_user.email, age=updated_user.age
+        )
+
+    
     async def get_user_by_id(self, id: int) -> UserResponseDTO:
         user = await self.repository.find_one(where={"id": id})
 
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
-        
+                
         return UserResponseDTO(id=user.id, name=user.name, email=user.email, age=user.age)
     
-    async def list_users(self) -> List[UserResponseDTO]:
-        users = await self.repository.find()
+    async def list_users(self, name: Optional[str] = None, age: Optional[int] = None) -> List[UserResponseDTO]:
+        filters = {}
+        if age is not None:
+            filters["age"] = age
+
+        if name is not None:
+            filters["name"] = name
+
+        users = await self.repository.find(where=filters)
         return [
             UserResponseDTO(id=user.id, name=user.name, email=user.email, age=user.age)
             for user in users
@@ -40,16 +68,20 @@ class UserService(EzyService):
         return UserResponseDTO(id=saved_user.id, name=saved_user.name, 
                              email=saved_user.email, age=saved_user.age)
     
-    async def update_user_by_id(self, id: int, data: UserCreateDTO) -> UserResponseDTO:
+    async def update_user_by_id(self, id: int, data: UserUpdateDTO) -> UserResponseDTO:
         user = await self.repository.find_one(where={"id": id})
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
+        if data.name is None or data.email is None or data.age is None:
+            raise HTTPException(status_code=400, detail="Name, email and age are required")
+        
         user.name = data.name
         user.email = data.email
         user.age = data.age
-        
+
         updated_user = await self.repository.save(user)
+
         
         return UserResponseDTO(id=updated_user.id, name=updated_user.name, 
                              email=updated_user.email, age=updated_user.age)

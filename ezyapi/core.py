@@ -10,7 +10,6 @@ from ezyapi.database import EzyService, DatabaseConfig, auto_inject_repository
 
 p = inflect.engine()
 
-# Custom route decorator
 def route(method: str, path: str, **kwargs):
     def decorator(func: Callable):
         @wraps(func)
@@ -45,37 +44,50 @@ class EzyAPI:
         
         service_name = self._get_service_name(service_class)
         self.services[service_name] = service_class
-        router = self._create_router_from_service(service_class)
-        self.app.include_router(router, prefix=f"/{service_name}", tags=[service_name])
-    
+        router = self._create_router_from_service(service_class, service_name)
+        
+        self.app.include_router(router, tags=[service_name])
+
     def _get_service_name(self, service_class: Type[EzyService]) -> str:
         name = service_class.__name__
         if name.endswith("Service"):
             name = name[:-7]
         return p.singular_noun(name.lower()) or name.lower()
     
-    def _create_router_from_service(self, service_class: Type[EzyService]) -> APIRouter:
+    def _create_router_from_service(self, service_class: Type[EzyService], service_name: str) -> APIRouter:
         router = APIRouter()
         service_instance = auto_inject_repository(service_class, self.db_config)
-
         existing_routes = {}
 
         for method_name, method in inspect.getmembers(service_class, inspect.isfunction):
             if method_name.startswith('_'):
                 continue
 
-            # Check if method has custom route decorator
+            method_parts = method_name.split('_')
+            
+            if method_parts[0] == 'list':
+                expected_name = f'list_{service_name}s'
+                if method_name != expected_name:
+                    raise RuntimeError(
+                        f"List method naming convention error: '{method_name}' should be named '{expected_name}'"
+                    )
+            elif service_name not in method_name:
+                raise RuntimeError(
+                    f"Method naming convention error: '{method_name}' must include service name '{service_name}'"
+                )
+
             custom_route = getattr(method, '__route_info__', None)
             if custom_route:
                 http_method = custom_route['method']
                 path = custom_route['path']
                 extra_kwargs = custom_route['extra_kwargs']
             else:
-                # Fall back to automatic routing
-                http_method, path = self._parse_method_name(method_name)
+                http_method, path = self._parse_method_name(method_name, service_name)
                 extra_kwargs = {}
 
-            # Validate route conflicts
+            if service_name == "app" and path == "":
+                path = "/"
+
             if http_method in existing_routes:
                 for existing_path in existing_routes[http_method]:
                     if self._is_conflicting_path(existing_path, path):
@@ -91,7 +103,7 @@ class EzyAPI:
 
             request_body = None
             path_params = []
-            query_params = []
+            query_params = {}
             param_types = {}
 
             for param_name, param in params.items():
@@ -104,22 +116,58 @@ class EzyAPI:
                 elif '{' + param_name + '}' in path:
                     path_params.append(param_name)
                 else:
-                    query_params.append(param_name)
+                    default_value = param.default if param.default is not param.empty else None
+                    query_params[param_name] = {
+                        'type': param_type,
+                        'default': default_value,
+                        'required': param.default is param.empty and param.annotation != Optional[param_type.__args__[0]] if hasattr(param_type, '__args__') else True
+                    }
 
             if request_body:
-                async def endpoint_with_body(data: request_body, service_instance=service_instance, method=method):
-                    return await method(service_instance, data=data)
-                func = endpoint_with_body
-            elif path_params:
-                async def endpoint_with_path(request: Request, service_instance=service_instance, method=method, path_params=path_params, param_types=param_types):
-                    call_args = {param: self._convert_param_type(request.path_params.get(param), param_types.get(param, Any)) for param in path_params}
+                async def endpoint_with_body(
+                    data: request_body,
+                    request: Request,
+                    service_instance=service_instance, 
+                    method=method,
+                    path_params=path_params
+                ):
+                    call_args = {'data': data}
+                    
+                    for param in path_params:
+                        call_args[param] = self._convert_param_type(
+                            request.path_params.get(param), 
+                            param_types.get(param, Any)
+                        )
+                        
                     return await method(service_instance, **call_args)
-                func = endpoint_with_path
+                func = endpoint_with_body
+            elif path_params or query_params:
+                async def endpoint_with_params(request: Request, service_instance=service_instance, method=method, 
+                                            path_params=path_params, query_params=query_params, param_types=param_types):
+                    call_args = {}
+                    
+                    for param in path_params:
+                        call_args[param] = self._convert_param_type(request.path_params.get(param), param_types.get(param, Any))
+                    
+                    for param_name, param_info in query_params.items():
+                        value = request.query_params.get(param_name)
+                        if value is not None:
+                            call_args[param_name] = self._convert_param_type(value, param_info['type'])
+                        elif not param_info['required']:
+                            call_args[param_name] = param_info['default']
+                        elif param_info['required']:
+                            if param_info['type'] == Optional:
+                                call_args[param_name] = None
+                            else:
+                                raise HTTPException(status_code=422, detail=f"Missing required query parameter: {param_name}")
+                    
+                    return await method(service_instance, **call_args)
+                func = endpoint_with_params
             else:
                 async def simple_endpoint(service_instance=service_instance, method=method):
                     return await method(service_instance)
                 func = simple_endpoint
-            
+
             func.__name__ = method_name
 
             route = getattr(router, http_method)(
@@ -129,25 +177,37 @@ class EzyAPI:
                 **extra_kwargs
             )
             route(func)
-        
+
         return router
+
     
-    def _parse_method_name(self, method_name: str) -> tuple:
+    def _parse_method_name(self, method_name: str, service_name: str) -> tuple:
         http_methods = {
-            'get': 'get', 'find': 'get', 'retrieve': 'get', 'list': 'get',
-            'create': 'post', 'add': 'post', 'update': 'put',
-            'edit': 'patch', 'modify': 'patch',
-            'delete': 'delete', 'remove': 'delete'
+            'get': 'get',
+            'list': 'get',
+            'create': 'post',
+            'update': 'put',
+            'edit': 'patch',
+            'delete': 'delete'
         }
         
         method_parts = method_name.split('_')
         http_method = http_methods.get(method_parts[0], 'get')
+        
         path = ""
+        
         if '_by_' in method_name:
             by_index = method_parts.index('by')
             if by_index < len(method_parts) - 1:
                 param_name = method_parts[by_index + 1]
                 path = f"/{{{param_name}}}"
+        
+        if service_name != "app" and not path.startswith(f"/{service_name}"):
+            if path.startswith("/{"):
+                path = f"/{service_name}" + path
+            else:
+                path = f"/{service_name}" + (path if path else "")
+        
         return http_method, path
     
     def _is_conflicting_path(self, path1: str, path2: str) -> bool:
