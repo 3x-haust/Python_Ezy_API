@@ -37,7 +37,7 @@ def print_logo():
     logo = f"""{CYAN}
  _______  ________  ____    ____         ___      .______    __  
 |   ____||       /  \   \  /   /        /   \     |   _  \  |  | 
-|  |__   ---/  /    \   \/   /        /  ^  \    |  |_)  | |  | 
+|  |__   `---/  /    \   \/   /        /  ^  \    |  |_)  | |  | 
 |   __|     /  /      \_    _/        /  /_\  \   |   ___/  |  | 
 |  |____   /  /----.    |  |         /  _____  \  |  |      |  | 
 |_______| /________|    |__|        /__/     \__\ | _|      |__| 
@@ -124,7 +124,6 @@ def update_main_for_service(name):
         print(f"{RED}Error updating main.py: {e}{RESET}", file=sys.stderr)
 
 def generate_fields_with_ai(resource_name):
-    # 환경 변수에서 GEMINI_API_KEY 값을 읽어옴
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         print(f"{RED}Error: GEMINI_API_KEY 환경 변수가 설정되지 않았습니다.{RESET}", file=sys.stderr)
@@ -144,7 +143,6 @@ def generate_fields_with_ai(resource_name):
         response.raise_for_status()
         result = response.json()
         generated_text = result['candidates'][0]['content']['parts'][0]['text']
-        # 정규식을 사용하여 JSON 부분 추출 (안전장치)
         json_match = re.search(r'\{.*\}', generated_text, re.DOTALL)
         if json_match:
             json_str = json_match.group(0)
@@ -532,19 +530,14 @@ class AppService(EzyService):
     print(f"{MAGENTA}Consider supporting our project if you like it!{RESET}\n")
 
 def init_project(project_name=None):
-    # 프로젝트 이름이 제공되지 않으면 현재 디렉토리 이름을 사용
     if project_name is None:
         project_name = os.path.basename(os.getcwd())
-    
-    # 현재 디렉토리에 ezy.json 경로 정의
     ezy_json_path = os.path.join(os.getcwd(), "ezy.json")
     
-    # ezy.json이 이미 존재하는지 확인
     if os.path.exists(ezy_json_path):
         print(f"{RED}Error: ezy.json already exists in this directory.{RESET}", file=sys.stderr)
         sys.exit(1)
     
-    # 동적 프로젝트 이름을 포함한 ezy.json 내용 정의
     ezy_json_content = {
         "name": project_name,
         "version": "0.1.0",
@@ -555,11 +548,9 @@ def init_project(project_name=None):
         "dependencies": {}
     }
     
-    # ezy.json 파일에 내용 작성
     with open(ezy_json_path, "w", encoding="utf-8") as f:
         json.dump(ezy_json_content, f, indent=2)
     
-    # 생성 및 성공 메시지 출력
     print_create_message(ezy_json_path)
     print(f"\n{GREEN}🚀  Successfully initialized project {project_name}{RESET}")
     print(f"{MAGENTA}👉  You can now create your main.py and other files.{RESET}")
@@ -594,7 +585,6 @@ def generate_resource(name):
         if use_ai:
             fields = generate_fields_with_ai(name)
         
-        # 디렉토리와 파일 생성
         with open(os.path.join(resource_dir, "__init__.py"), "w", encoding="utf-8") as f:
             f.write("")
         dto_dir = os.path.join(resource_dir, "dto")
@@ -606,7 +596,6 @@ def generate_resource(name):
         with open(os.path.join(entity_dir, "__init__.py"), "w", encoding="utf-8") as f:
             f.write("")
 
-        # 엔티티 생성
         entity_path = os.path.join(entity_dir, f"{name.lower()}_entity.py")
         if fields:
             entity_content = f"""from ezyapi.database import EzyEntityBase
@@ -625,8 +614,6 @@ class {name.capitalize()}Entity(EzyEntityBase):
         with open(entity_path, "w", encoding="utf-8") as f:
             f.write(entity_content)
         print_create_message(entity_path)
-
-        # DTO 생성
         create_dto_path = os.path.join(dto_dir, f"{name.lower()}_create_dto.py")
         if fields:
             create_dto_content = f"""from pydantic import BaseModel
@@ -634,7 +621,7 @@ class {name.capitalize()}Entity(EzyEntityBase):
 class {name.capitalize()}CreateDTO(BaseModel):
 """
             for field, field_type in fields.items():
-                if field != "id":  # Create DTO에서 'id'는 제외
+                if field != "id":
                     create_dto_content += f"    {field}: {field_type}\n"
             create_dto_content += "\n"
         else:
@@ -666,7 +653,6 @@ class {name.capitalize()}UpdateDTO(BaseModel):
             f.write(update_dto_content)
         print_create_message(update_dto_path)
 
-        # 서비스 생성
         singular = name.lower()
         plural = name.lower() + 's'
         service_path = os.path.join(resource_dir, f"{singular}_service.py")
@@ -696,7 +682,6 @@ class {name.capitalize()}Service(EzyService):
             f.write(service_content)
         print_create_message(service_path)
 
-        # 테스트 파일 생성
         test_dir = os.path.join(base_dir, "test")
         if not os.path.exists(test_dir):
             os.makedirs(test_dir)
@@ -728,7 +713,6 @@ class Test{name.capitalize()}Service:
             f.write(test_content)
         print_create_message(test_file_path)
     else:
-        # CRUD 없는 서비스
         service_path = os.path.join(resource_dir, f"{name.lower()}_service.py")
         with open(service_path, "w", encoding="utf-8") as f:
             f.write(f"""# Transport layer: {transport}
