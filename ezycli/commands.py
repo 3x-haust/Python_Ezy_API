@@ -8,6 +8,7 @@ import py_compile
 import threading
 import time
 import re
+import requests
 
 def get_version():
     setup_path = os.path.join(os.path.dirname(__file__), ".././setup.py")
@@ -36,7 +37,7 @@ def print_logo():
     logo = f"""{CYAN}
  _______  ________  ____    ____         ___      .______    __  
 |   ____||       /  \   \  /   /        /   \     |   _  \  |  | 
-|  |__   `---/  /    \   \/   /        /  ^  \    |  |_)  | |  | 
+|  |__   ---/  /    \   \/   /        /  ^  \    |  |_)  | |  | 
 |   __|     /  /      \_    _/        /  /_\  \   |   ___/  |  | 
 |  |____   /  /----.    |  |         /  _____  \  |  |      |  | 
 |_______| /________|    |__|        /__/     \__\ | _|      |__| 
@@ -88,7 +89,7 @@ def spinner_task(stop_event):
 def update_main_for_service(name):
     main_path = os.path.join(os.getcwd(), "main.py")
     if not os.path.exists(main_path):
-        return  # main.py가 없으면 업데이트하지 않음.
+        return
     service_import = f"from {name.lower()}.{name.lower()}_service import {name.capitalize()}Service"
     service_add = f"    app.add_service({name.capitalize()}Service)"
     try:
@@ -98,7 +99,6 @@ def update_main_for_service(name):
         print(f"{RED}Error reading main.py: {e}{RESET}", file=sys.stderr)
         return
 
-    # import 구문이 존재하는지 확인, 없으면 추가
     import_exists = any(service_import in line for line in lines)
     if not import_exists:
         insert_idx = 0
@@ -109,7 +109,6 @@ def update_main_for_service(name):
                 break
         lines.insert(insert_idx, service_import + "\n")
     
-    # add_service 호출이 존재하는지 확인, 없으면 추가
     add_exists = any(service_add.strip() in line.strip() for line in lines)
     if not add_exists:
         for i, line in enumerate(lines):
@@ -123,6 +122,41 @@ def update_main_for_service(name):
         print(f"{GREEN}Updated main.py with {name.capitalize()}Service.{RESET}")
     except Exception as e:
         print(f"{RED}Error updating main.py: {e}{RESET}", file=sys.stderr)
+
+def generate_fields_with_ai(resource_name):
+    # 환경 변수에서 GEMINI_API_KEY 값을 읽어옴
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        print(f"{RED}Error: GEMINI_API_KEY 환경 변수가 설정되지 않았습니다.{RESET}", file=sys.stderr)
+        return None
+
+    prompt = f"Generate a JSON object describing the fields for a {resource_name} entity in a web application. The JSON should have field names as keys and their types as values, like {{'field1': 'type1', 'field2': 'type2'}}. Types should be Python types like 'str', 'int', 'float', 'bool', etc. Provide only the JSON object without additional text."
+    
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+    
+    data = {
+        "contents": [{
+            "parts": [{"text": prompt}]
+        }]
+    }
+    try:
+        response = requests.post(url, json=data)
+        response.raise_for_status()
+        result = response.json()
+        generated_text = result['candidates'][0]['content']['parts'][0]['text']
+        # 정규식을 사용하여 JSON 부분 추출 (안전장치)
+        json_match = re.search(r'\{.*\}', generated_text, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(0)
+            fields = json.loads(json_str)
+            return fields
+        else:
+            print(f"{RED}Error: Could not find JSON in AI response.{RESET}", file=sys.stderr)
+            return None
+    except Exception as e:
+        print(f"{RED}Error generating fields with AI: {e}{RESET}", file=sys.stderr)
+        return None
+
 
 def new_project(project_name):
     project_path = os.path.join(os.getcwd(), project_name)
@@ -433,7 +467,7 @@ pyrightconfig.json
         "annotated-types", "anyio", "click", "dnspython", "fastapi", "h11",
         "idna", "inflect", "more-itertools", "motor", "psycopg2", "pydantic",
         "pydantic_core", "pymongo", "PyMySQL", "sniffio", "starlette",
-        "typeguard", "typing_extensions", "uvicorn"
+        "typeguard", "typing_extensions", "uvicorn", "pytest"
     ]
     ezy_json_path = os.path.join(project_path, "ezy.json")
     ezy_json_content = {
@@ -497,6 +531,39 @@ class AppService(EzyService):
     print(f"{YELLOW}Thanks for using EZY CLI 🙏{RESET}")
     print(f"{MAGENTA}Consider supporting our project if you like it!{RESET}\n")
 
+def init_project(project_name=None):
+    # 프로젝트 이름이 제공되지 않으면 현재 디렉토리 이름을 사용
+    if project_name is None:
+        project_name = os.path.basename(os.getcwd())
+    
+    # 현재 디렉토리에 ezy.json 경로 정의
+    ezy_json_path = os.path.join(os.getcwd(), "ezy.json")
+    
+    # ezy.json이 이미 존재하는지 확인
+    if os.path.exists(ezy_json_path):
+        print(f"{RED}Error: ezy.json already exists in this directory.{RESET}", file=sys.stderr)
+        sys.exit(1)
+    
+    # 동적 프로젝트 이름을 포함한 ezy.json 내용 정의
+    ezy_json_content = {
+        "name": project_name,
+        "version": "0.1.0",
+        "scripts": {
+            "start": "python3 main.py",
+            "dev": "python3 main.py --dev"
+        },
+        "dependencies": {}
+    }
+    
+    # ezy.json 파일에 내용 작성
+    with open(ezy_json_path, "w", encoding="utf-8") as f:
+        json.dump(ezy_json_content, f, indent=2)
+    
+    # 생성 및 성공 메시지 출력
+    print_create_message(ezy_json_path)
+    print(f"\n{GREEN}🚀  Successfully initialized project {project_name}{RESET}")
+    print(f"{MAGENTA}👉  You can now create your main.py and other files.{RESET}")
+
 def generate_resource(name):
     try:
         with open("ezy.json", "r", encoding="utf-8") as f:
@@ -505,12 +572,11 @@ def generate_resource(name):
         pass
     base_dir = os.getcwd()
     
-    # 루트 디렉토리에 __init__.py가 없는 경우 생성
     root_init = os.path.join(base_dir, "__init__.py")
     if not os.path.exists(root_init):
         with open(root_init, "w", encoding="utf-8") as f:
             f.write("")
-        print(f"{GREEN}CREATE {root_init} (0 bytes){RESET}")
+        print_create_message(root_init)
     
     resource_dir = os.path.join(base_dir, name.lower())
     if os.path.exists(resource_dir):
@@ -520,7 +586,149 @@ def generate_resource(name):
     transport = input(f"{YELLOW}What transport layer do you use? [REST API]: {RESET}") or "REST API"
     crud_answer = input(f"{YELLOW}Would you like to generate CRUD entry points? [Yes/No]: {RESET}").strip().lower() or "yes"
     crud = crud_answer in ["yes", "y"]
-    if not crud:
+    
+    if crud:
+        ai_answer = input(f"{YELLOW}Would you like to use AI to infer the fields for this resource? [Yes/No]: {RESET}").strip().lower() or "no"
+        use_ai = ai_answer in ["yes", "y"]
+        fields = None
+        if use_ai:
+            fields = generate_fields_with_ai(name)
+        
+        # 디렉토리와 파일 생성
+        with open(os.path.join(resource_dir, "__init__.py"), "w", encoding="utf-8") as f:
+            f.write("")
+        dto_dir = os.path.join(resource_dir, "dto")
+        os.makedirs(dto_dir)
+        with open(os.path.join(dto_dir, "__init__.py"), "w", encoding="utf-8") as f:
+            f.write("")
+        entity_dir = os.path.join(resource_dir, "entity")
+        os.makedirs(entity_dir)
+        with open(os.path.join(entity_dir, "__init__.py"), "w", encoding="utf-8") as f:
+            f.write("")
+
+        # 엔티티 생성
+        entity_path = os.path.join(entity_dir, f"{name.lower()}_entity.py")
+        if fields:
+            entity_content = f"""from ezyapi.database import EzyEntityBase
+
+class {name.capitalize()}Entity(EzyEntityBase):
+"""
+            for field, field_type in fields.items():
+                entity_content += f"    {field}: {field_type}\n"
+            entity_content += "\n"
+        else:
+            entity_content = f"""from ezyapi.database import EzyEntityBase
+
+class {name.capitalize()}Entity(EzyEntityBase):
+    pass
+"""
+        with open(entity_path, "w", encoding="utf-8") as f:
+            f.write(entity_content)
+        print_create_message(entity_path)
+
+        # DTO 생성
+        create_dto_path = os.path.join(dto_dir, f"{name.lower()}_create_dto.py")
+        if fields:
+            create_dto_content = f"""from pydantic import BaseModel
+
+class {name.capitalize()}CreateDTO(BaseModel):
+"""
+            for field, field_type in fields.items():
+                if field != "id":  # Create DTO에서 'id'는 제외
+                    create_dto_content += f"    {field}: {field_type}\n"
+            create_dto_content += "\n"
+        else:
+            create_dto_content = f"""from pydantic import BaseModel
+
+class {name.capitalize()}CreateDTO(BaseModel):
+    pass
+"""
+        with open(create_dto_path, "w", encoding="utf-8") as f:
+            f.write(create_dto_content)
+        print_create_message(create_dto_path)
+
+        update_dto_path = os.path.join(dto_dir, f"{name.lower()}_update_dto.py")
+        if fields:
+            update_dto_content = f"""from pydantic import BaseModel
+
+class {name.capitalize()}UpdateDTO(BaseModel):
+"""
+            for field, field_type in fields.items():
+                update_dto_content += f"    {field}: {field_type}\n"
+            update_dto_content += "\n"
+        else:
+            update_dto_content = f"""from pydantic import BaseModel
+
+class {name.capitalize()}UpdateDTO(BaseModel):
+    pass
+"""
+        with open(update_dto_path, "w", encoding="utf-8") as f:
+            f.write(update_dto_content)
+        print_create_message(update_dto_path)
+
+        # 서비스 생성
+        singular = name.lower()
+        plural = name.lower() + 's'
+        service_path = os.path.join(resource_dir, f"{singular}_service.py")
+        service_content = f"""# Transport layer: {transport}
+from ezyapi import EzyService
+from {singular}.dto.{singular}_create_dto import {name.capitalize()}CreateDTO
+from {singular}.dto.{singular}_update_dto import {name.capitalize()}UpdateDTO
+from {singular}.entity.{singular}_entity import {name.capitalize()}Entity
+
+class {name.capitalize()}Service(EzyService):
+    async def create_{singular}(self, data: {name.capitalize()}CreateDTO):
+        return 'This action adds a new {singular}'
+
+    async def list_{plural}(self):
+        return 'This action returns all {plural}'
+
+    async def get_{singular}_by_id(self, id: int):
+        return f'This action returns a #{{id}} {singular}'
+
+    async def update_{singular}_by_id(self, id: int, data: {name.capitalize()}UpdateDTO):
+        return f'This action updates a #{{id}} {singular}'
+
+    async def delete_{singular}_by_id(self, id: int):
+        return f'This action removes a #{{id}} {singular}'
+"""
+        with open(service_path, "w", encoding="utf-8") as f:
+            f.write(service_content)
+        print_create_message(service_path)
+
+        # 테스트 파일 생성
+        test_dir = os.path.join(base_dir, "test")
+        if not os.path.exists(test_dir):
+            os.makedirs(test_dir)
+        test_file_path = os.path.join(test_dir, f"test_{singular}_service.py")
+        test_content = f"""import pytest
+from {singular}.{singular}_service import {name.capitalize()}Service
+
+class Test{name.capitalize()}Service:
+    @pytest.fixture
+    def service(self):
+        return {name.capitalize()}Service()
+
+    def test_create_{singular}(self, service):
+        pass
+
+    def test_list_{plural}(self, service):
+        pass
+
+    def test_get_{singular}_by_id(self, service):
+        pass
+
+    def test_update_{singular}_by_id(self, service):
+        pass
+
+    def test_delete_{singular}_by_id(self, service):
+        pass
+"""
+        with open(test_file_path, "w", encoding="utf-8") as f:
+            f.write(test_content)
+        print_create_message(test_file_path)
+    else:
+        # CRUD 없는 서비스
         service_path = os.path.join(resource_dir, f"{name.lower()}_service.py")
         with open(service_path, "w", encoding="utf-8") as f:
             f.write(f"""# Transport layer: {transport}
@@ -529,68 +737,9 @@ from ezyapi import EzyService
 class {name.capitalize()}Service(EzyService):
     pass
 """)
-        print(f"{GREEN}Resource '{name}' created at: {resource_dir}{RESET}")
-        update_main_for_service(name)
-        return
-    with open(os.path.join(resource_dir, "__init__.py"), "w", encoding="utf-8") as f:
-        f.write("")
-    dto_dir = os.path.join(resource_dir, "dto")
-    os.makedirs(dto_dir)
-    with open(os.path.join(dto_dir, "__init__.py"), "w", encoding="utf-8") as f:
-        f.write("")
-    entity_dir = os.path.join(resource_dir, "entity")
-    os.makedirs(entity_dir)
-    with open(os.path.join(entity_dir, "__init__.py"), "w", encoding="utf-8") as f:
-        f.write("")
-    # DTO 파일 이름 변경: <resource>_create_dto.py, <resource>_update_dto.py
-    create_dto_path = os.path.join(dto_dir, f"{name.lower()}_create_dto.py")
-    with open(create_dto_path, "w", encoding="utf-8") as f:
-        f.write(f"""from pydantic import BaseModel
+        print_create_message(service_path)
 
-class {name.capitalize()}CreateDTO(BaseModel):
-    pass
-""")
-    update_dto_path = os.path.join(dto_dir, f"{name.lower()}_update_dto.py")
-    with open(update_dto_path, "w", encoding="utf-8") as f:
-        f.write(f"""from pydantic import BaseModel
-
-class {name.capitalize()}UpdateDTO(BaseModel):
-    pass
-""")
-    # Entity 템플릿 수정: EzyEntityBase를 상속하지 않음
-    entity_path = os.path.join(entity_dir, f"{name.lower()}_entity.py")
-    with open(entity_path, "w", encoding="utf-8") as f:
-        f.write(f"""from ezyapi.database import EzyEntityBase
-
-class {name.capitalize()}Entity():
-    pass
-""")
-    service_path = os.path.join(resource_dir, f"{name.lower()}_service.py")
-    with open(service_path, "w", encoding="utf-8") as f:
-        f.write(f"""# Transport layer: {transport}
-from ezyapi import EzyService
-from {name.lower()}.dto.{name.lower()}_create_dto import {name.capitalize()}CreateDTO
-from {name.lower()}.dto.{name.lower()}_update_dto import {name.capitalize()}UpdateDTO
-from {name.lower()}.entity.{name.lower()}_entity import {name.capitalize()}Entity
-
-class {name.capitalize()}Service(EzyService):
-    def create(self, data: {name.capitalize()}CreateDTO):
-        return 'This action adds a new {name.lower()}'
-
-    def find_all(self):
-        return 'This action returns all {name.lower()}s'
-
-    def find_one(self, id: int):
-        return f'This action returns a #{{id}} {name.lower()}'
-
-    def update(self, id: int, data: {name.capitalize()}UpdateDTO):
-        return f'This action updates a #{{id}} {name.lower()}'
-
-    def remove(self, id: int):
-        return f'This action removes a #{{id}} {name.lower()}'
-""")
     print(f"{GREEN}Resource '{name}' created at: {resource_dir}{RESET}")
-    # main.py를 자동으로 업데이트하여 새 서비스 추가
     update_main_for_service(name)
 
 def generate_component(component_type, name):
@@ -731,7 +880,6 @@ def install_dependencies(args):
     spinner_thread.join()
     update_dependencies_json(modules_path, config_path)
 
-
 def run_script(args):
     config_path = os.path.join(os.getcwd(), "ezy.json")
     if not os.path.exists(config_path):
@@ -784,8 +932,11 @@ def main():
     lint_parser.set_defaults(func=lambda args: lint_project())
     info_parser = subparsers.add_parser("info", help="Show CLI and system information")
     info_parser.set_defaults(func=lambda args: info_project())
-    update_parser = subparsers.add_parser("updte", help="Update the CLI (simulation)")
+    update_parser = subparsers.add_parser("update", help="Update the CLI (simulation)")
     update_parser.set_defaults(func=lambda args: update_cli())
+    init_parser = subparsers.add_parser("init", help="Initialize a new Ezy project in the current directory")
+    init_parser.add_argument("project_name", nargs='?', default=None, help="Name of the project (default: current directory name)")
+    init_parser.set_defaults(func=lambda args: init_project(args.project_name))
     args = parser.parse_args()
     if not args.command: 
         parser.print_help()
