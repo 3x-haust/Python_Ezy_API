@@ -1,0 +1,9 @@
+{
+  "name": "Python_Ezy_API",
+  "version": "0.1.0",
+  "scripts": {
+    "start": "python3 main.py",
+    "dev": "python3 main.py --dev"
+  },
+  "dependencies": {}
+}
