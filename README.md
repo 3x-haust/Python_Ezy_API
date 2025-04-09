@@ -13,6 +13,7 @@ This is the English version of the README.
 
 - [Table of Contents](#table-of-contents)
 - [Contribution Guide](#contribution-guide)
+  - [Fork the project](#fork-the-project)
   - [Create a Branch](#create-a-branch)
     - [Branch Naming Convention](#branch-naming-convention)
   - [Work and Commit](#work-and-commit)
@@ -46,6 +47,10 @@ This is the English version of the README.
 
 Ezy API is open to contributions from everyone!  
 Feel free to follow the steps below to participate.
+
+## Fork the project
+
+Fork the project, work on it in your personal repository, and PR it.
 
 ## Create a Branch
 
