@@ -1,4 +1,4 @@
-from ezyapi.core import route
+from ezyapi.decorators.route import route
 from fastapi import HTTPException
 from typing import List, Optional
 
