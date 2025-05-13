@@ -1,60 +1,95 @@
+"""
+API 코어 모듈
+
+이 모듈은 Ezy API의 핵심 클래스와 기능을 제공합니다.
+"""
+
 import inspect
 import re
 from typing import Any, Dict, Type, get_type_hints, Optional, Callable
 from fastapi import APIRouter, Depends, FastAPI, Path, Query, Request, HTTPException
 from pydantic import BaseModel
-import inflect
-from functools import wraps
 
-from ezyapi.database import EzyService, DatabaseConfig, auto_inject_repository
-
-p = inflect.engine()
-
-def route(method: str, path: str, **kwargs):
-    def decorator(func: Callable):
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            return await func(*args, **kwargs)
-        wrapper.__route_info__ = {
-            'method': method.lower(),
-            'path': path,
-            'extra_kwargs': kwargs
-        }
-        return wrapper
-    return decorator
+from ezyapi.service.base import EzyService
+from ezyapi.database.config import DatabaseConfig, auto_inject_repository
+from ezyapi.utils.inflection import get_service_name
 
 class EzyAPI:
+    """
+    Ezy API의 핵심 클래스
+    
+    이 클래스는 서비스 등록, 라우팅 설정, API 서버 실행 등을 담당합니다.
+    """
+    
     def __init__(self, 
                  title: str = "EzyAPI", 
                  description: str = "Auto-generated API from services",
                  db_config: Optional[DatabaseConfig] = None):
+        """
+        EzyAPI 클래스 초기화
+        
+        Args:
+            title (str): API 제목, OpenAPI 문서에 표시됨
+            description (str): API 설명, OpenAPI 문서에 표시됨
+            db_config (Optional[DatabaseConfig]): 데이터베이스 설정 객체
+        """
         self.app = FastAPI(title=title, description=description)
         self.services: Dict[str, Type[EzyService]] = {}
         self.db_config = db_config
     
     def configure_database(self, db_config: DatabaseConfig):
+        """
+        데이터베이스 설정을 구성합니다.
+        
+        Args:
+            db_config (DatabaseConfig): 데이터베이스 설정 객체
+            
+        Returns:
+            EzyAPI: 메소드 체이닝을 위한 자기 자신
+            
+        Raises:
+            TypeError: db_config가 DatabaseConfig 인스턴스가 아닌 경우
+        """
         if not isinstance(db_config, DatabaseConfig):
-            raise TypeError("db_config must be an instance of DatabaseConfig")
+            raise TypeError("db_config는 DatabaseConfig 인스턴스여야 합니다.")
         self.db_config = db_config
         return self
 
     def add_service(self, service_class: Type[EzyService]) -> None:
-        if not issubclass(service_class, EzyService):
-            raise TypeError(f"{service_class.__name__} must inherit from EzyService")
+        """
+        API에 서비스를 등록합니다.
         
-        service_name = self._get_service_name(service_class)
+        Args:
+            service_class (Type[EzyService]): 등록할 서비스 클래스
+            
+        Raises:
+            TypeError: service_class가 EzyService의 하위 클래스가 아닌 경우
+        """
+        if not issubclass(service_class, EzyService):
+            raise TypeError(f"{service_class.__name__}는 EzyService를 상속받아야 합니다.")
+        
+        service_name = get_service_name(service_class)
         self.services[service_name] = service_class
         router = self._create_router_from_service(service_class, service_name)
         
         self.app.include_router(router, tags=[service_name])
-
-    def _get_service_name(self, service_class: Type[EzyService]) -> str:
-        name = service_class.__name__
-        if name.endswith("Service"):
-            name = name[:-7]
-        return p.singular_noun(name.lower()) or name.lower()
     
     def _create_router_from_service(self, service_class: Type[EzyService], service_name: str) -> APIRouter:
+        """
+        서비스 클래스로부터 FastAPI 라우터를 생성합니다.
+        
+        서비스 클래스의 메소드를 분석하여 HTTP 엔드포인트로 등록합니다.
+        
+        Args:
+            service_class (Type[EzyService]): 라우터를 생성할 서비스 클래스
+            service_name (str): 서비스 이름
+            
+        Returns:
+            APIRouter: 생성된 FastAPI 라우터
+            
+        Raises:
+            RuntimeError: 라우팅 규칙 충돌 또는 메소드 이름 규칙 위반 시
+        """
         router = APIRouter()
         service_instance = auto_inject_repository(service_class, self.db_config)
         existing_routes = {}
@@ -69,11 +104,11 @@ class EzyAPI:
                 expected_name = f'list_{service_name}s'
                 if method_name != expected_name:
                     raise RuntimeError(
-                        f"List method naming convention error: '{method_name}' should be named '{expected_name}'"
+                        f"목록 메소드 이름 규칙 오류: '{method_name}'이 아닌 '{expected_name}'(으)로 이름을 지정해야 합니다."
                     )
             elif service_name not in method_name:
                 raise RuntimeError(
-                    f"Method naming convention error: '{method_name}' must include service name '{service_name}'"
+                    f"메소드 이름 규칙 오류: '{method_name}'에는 서비스 이름 '{service_name}'이(가) 포함되어야 합니다."
                 )
 
             custom_route = getattr(method, '__route_info__', None)
@@ -92,9 +127,9 @@ class EzyAPI:
                 for existing_path in existing_routes[http_method]:
                     if self._is_conflicting_path(existing_path, path):
                         raise RuntimeError(
-                            f"Route conflict detected: '{http_method.upper()} {path}' "
-                            f"conflicts with existing route '{http_method.upper()} {existing_path}'. "
-                            "Rename one of the methods or specify distinct routes."
+                            f"라우트 충돌 감지: '{http_method.upper()} {path}'이(가) "
+                            f"기존 라우트 '{http_method.upper()} {existing_path}'와(과) 충돌합니다. "
+                            "메소드 이름을 변경하거나 고유한 라우트를 지정하세요."
                         )
             existing_routes.setdefault(http_method, []).append(path)
 
@@ -159,7 +194,7 @@ class EzyAPI:
                             if param_info['type'] == Optional:
                                 call_args[param_name] = None
                             else:
-                                raise HTTPException(status_code=422, detail=f"Missing required query parameter: {param_name}")
+                                raise HTTPException(status_code=422, detail=f"필수 쿼리 매개변수가 없습니다: {param_name}")
                     
                     return await method(service_instance, **call_args)
                 func = endpoint_with_params
@@ -180,8 +215,17 @@ class EzyAPI:
 
         return router
 
-    
     def _parse_method_name(self, method_name: str, service_name: str) -> tuple:
+        """
+        메소드 이름을 분석하여 HTTP 메소드와 경로를 결정합니다.
+        
+        Args:
+            method_name (str): 서비스 메소드 이름
+            service_name (str): 서비스 이름
+            
+        Returns:
+            tuple: (HTTP 메소드, 경로)
+        """
         http_methods = {
             'get': 'get',
             'list': 'get',
@@ -211,11 +255,31 @@ class EzyAPI:
         return http_method, path
     
     def _is_conflicting_path(self, path1: str, path2: str) -> bool:
+        """
+        두 경로가 충돌하는지 확인합니다.
+        
+        Args:
+            path1 (str): 첫 번째 경로
+            path2 (str): 두 번째 경로
+            
+        Returns:
+            bool: 경로가 충돌하면 True, 그렇지 않으면 False
+        """
         def path_to_regex(path: str) -> str:
             return re.sub(r'\{[^}]+\}', r'[^/]+', path)
         return re.fullmatch(path_to_regex(path1), path2) or re.fullmatch(path_to_regex(path2), path1)
     
     def _convert_param_type(self, value: Any, param_type: Type) -> Any:
+        """
+        문자열 값을 지정된 유형으로 변환합니다.
+        
+        Args:
+            value (Any): 변환할 값
+            param_type (Type): 대상 유형
+            
+        Returns:
+            Any: 변환된 값
+        """
         if param_type == int:
             return int(value)
         elif param_type == float:
@@ -225,5 +289,13 @@ class EzyAPI:
         return value
     
     def run(self, host: str = "0.0.0.0", port: int = 8000, **kwargs):
+        """
+        API 서버를 실행합니다.
+        
+        Args:
+            host (str): 바인딩할 호스트
+            port (int): 바인딩할 포트
+            **kwargs: uvicorn에 전달할 추가 매개변수
+        """
         import uvicorn
         uvicorn.run(self.app, host=host, port=port, **kwargs)
