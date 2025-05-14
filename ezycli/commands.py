@@ -11,11 +11,11 @@ import re
 import requests
 
 def get_version():
-    setup_path = os.path.join(os.path.dirname(__file__), ".././setup.py")
+    setup_path = os.path.join(os.path.dirname(__file__), "../ezyapi/__init__.py")
     try:
         with open(setup_path, "r", encoding="utf-8") as f:
             content = f.read()
-        match = re.search(r"version\s*=\s*['\"]([^'\"]+)['\"]", content)
+        match = re.search(r"__version__\s*=\s*['\"]([^'\"]+)['\"]", content)
         if match:
             return match.group(1)
     except Exception as e:
