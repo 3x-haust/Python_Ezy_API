@@ -9,6 +9,7 @@ import threading
 import time
 import re
 import requests
+from tqdm import tqdm
 
 def get_version():
     setup_path = os.path.join(os.path.dirname(__file__), "../ezyapi/__init__.py")
@@ -19,8 +20,9 @@ def get_version():
         if match:
             return match.group(1)
     except Exception as e:
-        print(f"Error reading version from setup.py: {e}", file=sys.stderr)
-    return "unknown"
+        print(f"Warning: Could not read version from setup.py: {e}", file=sys.stderr)
+    
+    return "0.0.7"
 
 CLI_VERSION = get_version()
 
@@ -815,10 +817,31 @@ def install_dependencies(args):
     if not os.path.exists(config_path):
         print(f"{RED}Error: ezy.json not found. Are you in a project directory?{RESET}", file=sys.stderr)
         sys.exit(1)
+    
     with open(config_path, "r", encoding="utf-8") as f:
         config = json.load(f)
     dependencies = config.get("dependencies", {})
-    if args.packages:
+    
+    if args.requirements:
+        try:
+            packages_to_install = {}
+            with open(args.requirements, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#"):
+                        if "==" in line:
+                            pkg_name, version = line.split("==", 1)
+                            packages_to_install[pkg_name.strip()] = version.strip()
+                        else:
+                            packages_to_install[line.strip()] = "latest"
+            
+            config["dependencies"] = packages_to_install
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(config, f, indent=2)
+        except Exception as e:
+            print(f"{RED}Error reading requirements.txt: {str(e)}{RESET}", file=sys.stderr)
+            sys.exit(1)
+    elif args.packages:
         packages_to_install = {}
         for pkg in args.packages:
             if "==" in pkg:
@@ -826,43 +849,71 @@ def install_dependencies(args):
                 packages_to_install[pkg_name] = "latest"
             else:
                 packages_to_install[pkg] = "latest"
-        for pkg, ver in packages_to_install.items():
-            dependencies[pkg] = "latest"
-        config["dependencies"] = dependencies
+        config["dependencies"] = packages_to_install
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=2)
     else:
         packages_to_install = dependencies
+    
     if not packages_to_install:
         print(f"{YELLOW}No dependencies to install.{RESET}")
         return
+    
     modules_path = os.path.join(os.getcwd(), "ezy_modules")
     if not os.path.exists(modules_path):
         os.makedirs(modules_path)
+    
     print(f"{YELLOW}Installing dependencies into ezy_modules...{RESET}")
-    stop_event = threading.Event()
-    spinner_thread = threading.Thread(target=spinner_task, args=(stop_event,))
-    spinner_thread.start()
-    try:
-        for pkg, ver in packages_to_install.items():
-            result = subprocess.run(
+    
+    for pkg, ver in packages_to_install.items():
+        print(f"\n{CYAN}Installing {pkg}...{RESET}")
+        try:
+            process = subprocess.Popen(
                 [sys.executable, "-m", "pip", "install", "--target", modules_path, pkg],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1,
+                universal_newlines=True
             )
-            if result.returncode != 0:
-                stop_event.set()
-                spinner_thread.join()
-                print(f"{RED}Failed to install {pkg}.{RESET}", file=sys.stderr)
+            
+            pbar = tqdm(
+                total=100,
+                desc=f"{GREEN}Progress{RESET}",
+                bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}",
+                ncols=80,
+                leave=False
+            )
+            
+            while True:
+                output = process.stdout.readline()
+                if output == '' and process.poll() is not None:
+                    break
+                if output:
+                    if "Collecting" in output:
+                        pbar.update(20)
+                    elif "Installing collected packages" in output:
+                        pbar.update(30)
+                    elif "Successfully installed" in output:
+                        pbar.update(50)
+            
+            pbar.close()
+            
+            if process.returncode != 0:
+                error = process.stderr.read()
+                print(f"{RED}Failed to install {pkg}.{RESET}")
+                print(f"{RED}Error details:{RESET}")
+                print(error)
                 sys.exit(1)
-    except KeyboardInterrupt:
-        stop_event.set()
-        spinner_thread.join()
-        print(f"\n{YELLOW}Installation cancelled by user.{RESET}")
-        sys.exit(1)
-    stop_event.set()
-    spinner_thread.join()
+            
+            print(f"{GREEN}✓ {pkg} installed successfully{RESET}")
+            
+        except Exception as e:
+            print(f"{RED}Error installing {pkg}: {str(e)}{RESET}")
+            sys.exit(1)
+    
     update_dependencies_json(modules_path, config_path)
+    print(f"\n{GREEN}All dependencies installed successfully!{RESET}")
 
 def run_script(args):
     config_path = os.path.join(os.getcwd(), "ezy.json")
@@ -902,6 +953,7 @@ def main():
     generate_parser.set_defaults(func=lambda args: generate_all_or_single(args))
     install_parser = subparsers.add_parser("install", help="Install dependencies into ezy_modules or add new packages")
     install_parser.add_argument("packages", nargs="*", help="Optional: package names to install (e.g., opencv or opencv==4.5.3)")
+    install_parser.add_argument("-r", "--requirements", metavar="FILE", help="Path to requirements.txt file")
     install_parser.set_defaults(func=lambda args: install_dependencies(args))
     run_parser = subparsers.add_parser("run", help="Run a script defined in ezy.json (e.g., 'ezy run dev' or 'ezy run start')")
     run_parser.add_argument("script", nargs="?", help="Name of the script to run")
@@ -929,3 +981,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
