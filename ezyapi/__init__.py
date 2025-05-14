@@ -14,4 +14,4 @@ from ezyapi.database.filters import (
 )
 from ezyapi.decorators.route import route
 
-__version__ = "1.2.0"
+__version__ = "1.2.1"
