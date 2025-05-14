@@ -5,4 +5,4 @@ inflect
 psycopg2
 pymysql
 motor
-numpy
+requests

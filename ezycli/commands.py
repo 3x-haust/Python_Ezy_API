@@ -12,18 +12,13 @@ import requests
 from tqdm import tqdm
 
 def get_version():
+    setup_path = os.path.join(os.path.dirname(__file__), "../ezyapi/__init__.py")
     try:
- 
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        root_dir = os.path.dirname(current_dir)
-        setup_path = os.path.join(root_dir, "setup.py")
-        
-        if os.path.exists(setup_path):
-            with open(setup_path, "r", encoding="utf-8") as f:
-                content = f.read()
-            match = re.search(r"version\s*=\s*['\"]([^'\"]+)['\"]", content)
-            if match:
-                return match.group(1)
+        with open(setup_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        match = re.search(r"__version__\s*=\s*['\"]([^'\"]+)['\"]", content)
+        if match:
+            return match.group(1)
     except Exception as e:
         print(f"Warning: Could not read version from setup.py: {e}", file=sys.stderr)
     
