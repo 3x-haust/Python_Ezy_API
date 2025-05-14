@@ -331,14 +331,37 @@ class EzyAPI:
             return value.lower() in ('true', 'yes', '1')
         return value
     
-    def run(self, host: str = "0.0.0.0", port: int = 8000, **kwargs):
+    def run(self, host: str = "0.0.0.0", port: int = 8000, reload: bool = False, **kwargs):
         """
         API 서버를 실행합니다.
         
         Args:
             host (str): 바인딩할 호스트
             port (int): 바인딩할 포트
+            reload (bool): 코드 변경 시 자동 재시작 여부 (개발 모드)
             **kwargs: uvicorn에 전달할 추가 매개변수
         """
         import uvicorn
-        uvicorn.run(self.app, host=host, port=port, **kwargs)
+        import inspect
+        import sys
+        
+        if reload:
+            main_module = sys.modules['__main__']
+            main_file = inspect.getfile(main_module)
+            module_name = main_module.__name__
+            
+            app_var_name = None
+            for var_name, var_val in vars(main_module).items():
+                if var_val is self:
+                    app_var_name = var_name
+                    break
+            
+            if not app_var_name:
+                raise RuntimeError(
+                    "reload=True를 사용하기 위해서는 EzyAPI 인스턴스가 __main__ 모듈에서 전역 변수로 정의되어야 합니다."
+                )
+            
+            app_import_string = f"{module_name}:{app_var_name}.app"
+            uvicorn.run(app_import_string, host=host, port=port, reload=reload, **kwargs)
+        else:
+            uvicorn.run(self.app, host=host, port=port, **kwargs)
