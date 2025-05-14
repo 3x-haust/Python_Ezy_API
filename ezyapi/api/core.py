@@ -5,9 +5,12 @@ API 코어 모듈
 """
 
 import inspect
+import os
 import re
 from typing import Any, Dict, Type, get_type_hints, Optional, Callable
 from fastapi import APIRouter, Depends, FastAPI, Path, Query, Request, HTTPException
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from ezyapi.service.base import EzyService
@@ -36,6 +39,13 @@ class EzyAPI:
         self.app = FastAPI(title=title, description=description)
         self.services: Dict[str, Type[EzyService]] = {}
         self.db_config = db_config
+        
+        current_dir = os.getcwd()
+        self.templates_dir = os.path.join(current_dir, "public", "templates")
+        static_dir = os.path.join(current_dir, "public")
+        
+        if os.path.exists(static_dir):
+            self.app.mount("/static", StaticFiles(directory=static_dir), name="static")
     
     def configure_database(self, db_config: DatabaseConfig):
         """
@@ -73,6 +83,26 @@ class EzyAPI:
         router = self._create_router_from_service(service_class, service_name)
         
         self.app.include_router(router, tags=[service_name])
+    
+    def _load_html_template(self, template_name: str) -> str:
+        """
+        HTML 템플릿 파일을 로드합니다.
+        
+        Args:
+            template_name (str): 로드할 템플릿 파일 이름
+            
+        Returns:
+            str: 템플릿 파일 내용
+            
+        Raises:
+            FileNotFoundError: 템플릿 파일이 존재하지 않는 경우
+        """
+        template_path = os.path.join(self.templates_dir, template_name)
+        if not os.path.exists(template_path):
+            raise FileNotFoundError(f"템플릿 파일을 찾을 수 없습니다: {template_path}")
+        
+        with open(template_path, 'r', encoding='utf-8') as file:
+            return file.read()
     
     def _create_router_from_service(self, service_class: Type[EzyService], service_name: str) -> APIRouter:
         """
@@ -161,7 +191,6 @@ class EzyAPI:
             if request_body:
                 async def endpoint_with_body(
                     data: request_body,
-                    request: Request,
                     service_instance=service_instance, 
                     method=method,
                     path_params=path_params
@@ -173,8 +202,12 @@ class EzyAPI:
                             request.path_params.get(param), 
                             param_types.get(param, Any)
                         )
-                        
-                    return await method(service_instance, **call_args)
+                    
+                    result = await method(service_instance, **call_args)
+                    if isinstance(result, str) and result.endswith('.html') and os.path.exists(self.templates_dir):
+                        template_content = self._load_html_template(result)
+                        return HTMLResponse(content=template_content)
+                    return result
                 func = endpoint_with_body
             elif path_params or query_params:
                 async def endpoint_with_params(request: Request, service_instance=service_instance, method=method, 
@@ -196,18 +229,28 @@ class EzyAPI:
                             else:
                                 raise HTTPException(status_code=422, detail=f"필수 쿼리 매개변수가 없습니다: {param_name}")
                     
-                    return await method(service_instance, **call_args)
+                    result = await method(service_instance, **call_args)
+                    if isinstance(result, str) and result.endswith('.html') and os.path.exists(self.templates_dir):
+                        template_content = self._load_html_template(result)
+                        return HTMLResponse(content=template_content)
+                    return result
                 func = endpoint_with_params
             else:
                 async def simple_endpoint(service_instance=service_instance, method=method):
-                    return await method(service_instance)
+                    result = await method(service_instance)
+                    if isinstance(result, str) and result.endswith('.html') and os.path.exists(self.templates_dir):
+                        template_content = self._load_html_template(result)
+                        return HTMLResponse(content=template_content)
+                    return result
                 func = simple_endpoint
 
             func.__name__ = method_name
 
+            is_html_template = return_type == str
+            
             route = getattr(router, http_method)(
                 path,
-                response_model=return_type if return_type != Any else None,
+                response_model=None if is_html_template else (return_type if return_type != Any else None),
                 summary=method.__doc__.strip() if method.__doc__ else method_name,
                 **extra_kwargs
             )
