@@ -37,6 +37,18 @@
     - [쿼리 파라미터 예시](#쿼리-파라미터-예시)
     - [데코레이터 예시 (@route)](#데코레이터-예시-route)
 - [CLI 개요](#cli-개요)
+    - [설치](#설치)
+    - [명령어](#명령어)
+    - [예제](#예제)
+      - [새 프로젝트 생성](#새-프로젝트-생성)
+      - [리소스 생성](#리소스-생성)
+      - [의존성 설치](#의존성-설치)
+      - [스크립트 실행](#스크립트-실행)
+      - [테스트 실행](#테스트-실행)
+      - [코드 린팅](#코드-린팅)
+      - [정보 확인](#정보-확인)
+      - [프로젝트 초기화](#프로젝트-초기화)
+    - [프로젝트 구조](#프로젝트-구조)
 
 </br>
 </br>
@@ -152,7 +164,7 @@ Ezy API는 [Python](https://www.python.org/)언어를 사용합니다.
 
 #### 전제조건
 
-운영 체제에 [Python](https://www.python.org/)(>= 3.6)가 설치되어 있는지 확인하세요.
+운영 체제에 [Python](https://www.python.org/)(>= 3.11)가 설치되어 있는지 확인하세요.
 
 #### 설정하기
 
@@ -386,3 +398,177 @@ GET /name/Alice
 </br>
 
 # CLI 개요
+
+Ezy CLI는 Ezy API 프로젝트 관리를 간소화하기 위한 명령줄 인터페이스 도구입니다. 프로젝트 생성, 빌드, 테스트, 실행 등을 쉽게 수행할 수 있는 다양한 명령어를 제공합니다.
+
+### 설치
+
+Ezy CLI는 pip를 사용하여 설치할 수 있습니다:
+
+```bash
+$ pip install ezyapi
+```
+
+> **참고**
+>
+> 시스템에 Python 3.11 이상 버전이 설치되어 있는지 확인하세요.
+
+### 명령어
+
+Ezy CLI는 다음 명령어를 지원합니다:
+
+| 명령어 | 설명 |
+|:---|:---|
+|`new <project_name>`|지정된 이름으로 새로운 Ezy API 프로젝트를 생성합니다.|
+|`generate <type> <name>` 또는 `g <type> <name>`|지정된 유형(예: 'res' for resource)과 이름으로 컴포넌트를 생성합니다.|
+|`install [packages...]` 또는 `install -r <requirements.txt>`|ezy_modules 디렉토리에 의존성을 설치합니다. 패키지를 직접 지정하거나 requirements.txt 파일을 사용할 수 있습니다.|
+|`run <script>`|ezy.json에 정의된 스크립트를 실행합니다 (예: 'dev' 또는 'start').|
+|`test`|'test' 디렉토리에 있는 테스트를 pytest로 실행합니다.|
+|`lint`|flake8을 사용하여 코드 스타일을 점검합니다.|
+|`info`|CLI 버전, Python 버전, 플랫폼, 현재 디렉토리 정보를 표시합니다.|
+|`init [project_name]`|현재 디렉토리에 새로운 Ezy 프로젝트를 초기화합니다. 프로젝트 이름을 지정하지 않으면 현재 디렉토리 이름이 사용됩니다.|
+
+### 예제
+
+#### 새 프로젝트 생성
+
+```bash
+$ ezy new my_project
+```
+
+`my_project`라는 이름의 디렉토리에 Ezy API 프로젝트의 기본 구조를 생성합니다.
+
+#### 리소스 생성
+
+```bash
+$ ezy generate res user
+```
+
+"user"라는 이름의 리소스를 생성하며, 선택적으로 CRUD 작업을 포함합니다.
+
+#### 의존성 설치
+
+ezy.json에 나열된 의존성을 설치하려면:
+
+```bash
+$ ezy install
+```
+
+특정 패키지를 설치하려면:
+
+```bash
+$ ezy install requests numpy
+```
+
+requirements.txt 파일에서 설치하려면:
+
+```bash
+$ ezy install -r requirements.txt
+```
+
+#### 스크립트 실행
+
+ezy.json에 정의된 스크립트가 있다고 가정할 때, 예를 들어:
+
+```json
+{
+  "scripts": {
+    "start": "python3 main.py",
+    "dev": "python3 main.py --dev"
+  }
+}
+```
+
+다음과 같이 실행할 수 있습니다:
+
+```bash
+$ ezy run start
+```
+
+#### 테스트 실행
+
+테스트를 실행하려면:
+
+```bash
+$ ezy test
+```
+
+> **참고**
+> 
+> pytest가 설치되어 있어야 합니다.
+
+#### 코드 린팅
+
+코드 스타일 문제를 점검하려면:
+
+```bash
+$ ezy lint
+```
+
+> **참고**
+> 
+> flake8이 설치되어 있어야 합니다.
+
+#### 정보 확인
+
+CLI 및 시스템 정보를 표시하려면:
+
+```bash
+$ ezy info
+```
+
+#### 프로젝트 초기화
+
+현재 디렉토리에 새 Ezy 프로젝트를 초기화하려면:
+
+```bash
+$ ezy init
+```
+
+### 프로젝트 구조
+
+`ezy new <project_name>` 명령으로 새 프로젝트를 생성하면 다음 구조가 생성됩니다:
+
+```
+project_name/
+├── ezy.json
+├── main.py
+├── app_service.py
+├── test/
+│   └── (테스트 파일)
+├── ezy_modules/
+│   └── (설치된 의존성)
+└── .gitignore
+```
+
+* `ezy.json`: 프로젝트 설정(의존성 및 스크립트 포함).
+* `main.py`: 애플리케이션 진입점.
+* `app_service.py`: 예제 서비스.
+* `test/`: 테스트 파일 디렉토리.
+* `ezy_modules/`: 프로젝트별 의존성을 위한 디렉토리.
+* `.gitignore`: Git 무시 파일.
+
+`ezy generate res <name>` 명령으로 리소스를 생성하면 다음 구조가 생성됩니다:
+
+```
+<name>/
+├── __init__.py
+├── dto/
+│   ├── __init__.py
+│   ├── <name>_create_dto.py
+│   └── <name>_update_dto.py
+├── entity/
+│   ├── __init__.py
+│   └── <name>_entity.py
+└── <name>_service.py
+```
+
+또한 `test/test_<name>_service.py`에 테스트 파일이 생성됩니다.
+
+> **참고**
+> 
+> * CLI는 ANSI 색상을 지원하는 터미널에서 가독성을 높이기 위해 색상 코드를 사용합니다.
+> * `test` 명령은 pytest가 설치되어 있어야 합니다. 새 프로젝트의 기본 의존성에 포함되어 있습니다.
+> * `lint` 명령은 flake8이 필요합니다. 별도로 설치해야 할 수 있습니다.
+> * `update` 명령은 현재 실제 업데이트를 수행하지 않고 시뮬레이션만 합니다.
+

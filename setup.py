@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="ezyapi",
-    version="1.2.1",
+    version="1.3.0",
     author="3xhaust, nck90",
     author_email="s2424@e-mirim.hs.kr, s2460@e-mirim.hs.kr",
     description="쉬운 API 생성 및 프로젝트 관리를 위한 프레임워크",
@@ -28,5 +28,6 @@ setuptools.setup(
     python_requires='>=3.11',
     install_requires=[
         'requests>=2.32.3'
+        'tqdm>=4.67.1'
     ]
 )
