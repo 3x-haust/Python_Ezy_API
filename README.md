@@ -1,5 +1,5 @@
-This is the English version of the README.  
-[여기를 클릭하여 한국어 버전을 확인하세요.](./README-ko.md)
+This README is the English version.  
+[Click here for the Korean version.](./README.ko.md)
 
 ![Contributors](https://img.shields.io/github/contributors/3x-haust/Python_Ezy_API?style=flat)
 ![Forks](https://img.shields.io/github/forks/3x-haust/Python_Ezy_API?style=social?style=flat)
@@ -10,19 +10,18 @@ This is the English version of the README.
 </br>
 
 # Table of Contents
-
 - [Table of Contents](#table-of-contents)
-- [Contribution Guide](#contribution-guide)
-  - [Fork the project](#fork-the-project)
+- [How to Contribute](#how-to-contribute)
+  - [Fork the Project](#fork-the-project)
   - [Create a Branch](#create-a-branch)
     - [Branch Naming Convention](#branch-naming-convention)
   - [Work and Commit](#work-and-commit)
     - [Commit Message Convention](#commit-message-convention)
     - [Commit Examples](#commit-examples)
-  - [Push to Remote](#push-to-remote)
-  - [Create a Pull Request (PR)](#create-a-pull-request-pr)
+  - [Push to Remote Repository](#push-to-remote-repository)
+  - [Submit a Pull Request (PR)](#submit-a-pull-request-pr)
   - [Merge](#merge)
-- [First Step](#first-step)
+- [First Steps](#first-steps)
     - [Background](#background)
     - [Getting Started](#getting-started)
       - [Language](#language)
@@ -33,79 +32,92 @@ This is the English version of the README.
     - [What is a Service?](#what-is-a-service)
     - [Service Structure](#service-structure)
     - [URL Mapping Rules](#url-mapping-rules)
-    - [Registering a Service](#registering-a-service)
+    - [Service Registration](#service-registration)
     - [Path Parameter Example](#path-parameter-example)
     - [Query Parameter Example](#query-parameter-example)
     - [Decorator Example (@route)](#decorator-example-route)
 - [CLI Overview](#cli-overview)
-  
+    - [Installation](#installation)
+    - [Commands](#commands)
+    - [Examples](#examples)
+      - [Create a New Project](#create-a-new-project)
+      - [Generate a Resource](#generate-a-resource)
+      - [Install Dependencies](#install-dependencies)
+      - [Run Scripts](#run-scripts)
+      - [Run Tests](#run-tests)
+      - [Lint Code](#lint-code)
+      - [View Information](#view-information)
+      - [Initialize a Project](#initialize-a-project)
+    - [Project Structure](#project-structure)
+
 </br>
 </br>
 </br>
 
-# Contribution Guide
+# How to Contribute
 
-Ezy API is open to contributions from everyone!  
-Feel free to follow the steps below to participate.
+Anyone can freely contribute to Ezy API!  
+Please follow the procedure below to participate comfortably.
 
-## Fork the project
+## Fork the Project
 
-Fork the project, work on it in your personal repository, and PR it.
+Fork the project to work in your personal repository and then submit a PR.
 
 ## Create a Branch
 
-When starting new work, please create a **branch**. Branches are usually named in the format `feature/{feature-name}`.
+When starting new work, please create a **branch**. Branches are typically written in the form of `feature/{feature-name}`.
 
 ```bash
-# Switch to the main branch and sync with the latest version
+# Move to the main branch and sync with the latest state
 $ git checkout main
 $ git pull origin main
 
-# Create and switch to a new branch
+# Create and move to a new branch
 $ git checkout -b feature/feature-name
 ```
 
 ### Branch Naming Convention
 
-Name your branch according to the nature of your work.
+Please write branch names according to the nature of your work.
 
 | Type | Description | Example |
 |:---:|:---|:---|
 | `feature/` | New feature development | `feature/login-api`, `feature/add-user-api` |
 | `fix/` | Bug fixes | `fix/login-bug`, `fix/routing-error` |
-| `docs/` | Documentation (README, comments, etc.) | `docs/update-readme`, `docs/api-docs` |
+| `docs/` | Documentation work (README, comments, etc.) | `docs/update-readme`, `docs/api-docs` |
 | `refactor/` | Code refactoring | `refactor/login-service`, `refactor/db-helper` |
-| `test/` | Adding or updating tests | `test/user-service-test` |
-| `chore/` | Build settings, package management, miscellaneous tasks | `chore/update-deps`, `chore/ci-config` |
+| `test/` | Add or modify test code | `test/user-service-test` |
+| `chore/` | Build settings, package management, other miscellaneous tasks | `chore/update-deps`, `chore/ci-config` |
 
 > **Tip**
 > 
-> Branch names should clearly indicate the purpose of the work.
+> Branch names should clearly reflect the content of your work.
+
 
 ## Work and Commit
 
-After completing your work, write a commit message following the **commit convention** below.
+After completing your work, please write commit messages according to the **commit conventions** below.
 
 ### Commit Message Convention
 
 | Tag | Description |
 |:---:|:---|
-| `feat` | Add a new feature |
-| `fix` | Fix a bug |
-| `docs` | Update documentation (README, comments, etc.) |
-| `style` | Code formatting, typos, non-functional changes |
-| `refactor` | Code refactoring (internal improvements without behavior change) |
-| `test` | Add or update tests |
-| `chore` | Build tasks, package manager configuration, maintenance work |
+| `feat` | Add new features |
+| `fix` | Fix bugs |
+| `docs` | Modify documentation (README, comments, etc.) |
+| `style` | Code formatting, spelling fixes, etc. that don't affect the code functionality |
+| `refactor` | Code refactoring (improving internal logic without changing behavior) |
+| `test` | Add or modify test code |
+| `chore` | Build tasks, package manager configuration, maintenance work, etc. |
 
 ### Commit Examples
 ```bash
-$ git commit -m "feat: add user API"
-$ git commit -m "fix: fix incorrect router path"
-$ git commit -m "docs: add installation guide to README"
+$ git commit -m "feat: Add user API"
+$ git commit -m "fix: Fix incorrect router path"
+$ git commit -m "docs: Add installation method to README"
 ```
 
-## Push to Remote
+## Push to Remote Repository
 
 Push your branch to the remote repository.
 
@@ -113,16 +125,16 @@ Push your branch to the remote repository.
 $ git push origin feature/feature-name
 ```
 
-## Create a Pull Request (PR)
+## Submit a Pull Request (PR)
 
 - Create a **Pull Request** on GitHub.
-- Briefly describe what you worked on in the PR description.
-- Then proceed with a code review with your team.
+- Briefly explain what work you did in the PR description.
+- Proceed with code review with team members.
 
 ## Merge
 
-- Once the review is complete and approved, **merge into the main branch**.
-- After merging, always make sure to sync your local `main` branch before starting new work.
+- After review and approval, **merge to the main branch**.
+- After merging, always sync your `main` branch to the latest before starting other work.
 
 ```bash
 $ git checkout main
@@ -133,63 +145,64 @@ $ git pull origin main
 </br>
 </br>
 
-# First Step
+# First Steps
 
 ### Background
 
-We love [Nest.js](https://nestjs.com/), but we felt that the Controller and Module in [Nest.js](https://nestjs.com/) are unnecessary for simple tasks.
+We like [Nest.js](https://nestjs.com/), but we thought that Nest.js's Controller, Module, etc. were unnecessary for simple tasks.
 
 ### Getting Started
 
-In this document, we will explore the **core principles** of Ezy API. To familiarize yourself with the essential components of an Ezy API application, you should build a basic CRUD application covering various areas at a basic level.
+In this document, we'll explore the **core principles** of Ezy API. To understand the essential components of an Ezy API application,
+you need to build a basic CRUD application covering many areas at a fundamental level.
 
 #### Language
 
 Ezy API uses the [Python](https://www.python.org/) language.
 
-In the future, we plan to support languages like [TypeScript](https://www.typescriptlang.org/) and [Java](https://java.com/).
+In the future, we plan to support other languages such as [TypeScript](https://www.typescriptlang.org/) and [Java](https://java.com/).
 
 #### Prerequisites
 
-Make sure you have [Python](https://www.python.org/) (>= 3.6) installed on your operating system.
+Make sure [Python](https://www.python.org/) (>= 3.11) is installed on your operating system.
 
 #### Setup
 
-Setting up a new project with the [Ezy API CLI](#cli-overview) is very simple. If [pip](https://pypi.org/project/pip/) is installed, you can create a new Ezy API project in the OS terminal with the following command:
+Setting up a new project with [Ezy API CLI](#cli-overview) is very simple. If you have [pip](https://pypi.org/project/pip/) installed, you can create a new Ezy API project using the following command in your OS terminal:
+
 
 ```bash
 $ pip install ezyapi
 $ ezy new project-name
 ```
 
-A directory called `project-name` will be created along with a `main.py` and CLI configuration files. 
+A `project-name` directory will be created, along with main.py and CLI configuration files.
 
-The basic structure of the project looks like this:
+The basic structure of the project is as follows:
 ```
 app_service.py
 ezy.json
 main.py
 ```
-
-> **Tip**  
+> **Tip**
 > 
-> You can view these files [here](https://github.com/3x-haust/Python_Ezy_API/tree/main/example).
+> The above files can be found [here](https://github.com/3x-haust/Python_Ezy_API/tree/main/example).
 
 <br></br>
 
-Here is a brief description of the core files:
+The core files described above can be briefly explained as follows:
 
-| Filename       | Description |
-|:--------------:|:----------:|
-| `app_service.py` | Basic service file |
-| `ezy.json`       | CLI command configuration file |
-| `main.py`        | Entry point. Creates an Ezy API application instance using the core function `EzyAPI`. |
+|Filename|Description|
+|:---:|:---|
+|`app_service.py`|Basic service file|
+|`ezy.json`|CLI command configuration file|
+|`main.py`|Entry file. Uses the core function `EzyAPI` to create an Ezy API application instance.|
 
-> You don't need to fully understand services and other components at this stage. Detailed explanations will follow in upcoming chapters!
+> If you don't understand the services described above, that's okay. More detailed explanations will come in later chapters!
 
 <br><br/>
 
-Let’s start with creating a simple `main.py` file. This file contains the main module that starts the application.
+Let's start by creating a simple main.py file. This file contains the main module that starts the application.
 
 ```python
 # main.py
@@ -205,8 +218,7 @@ if __name__ == "__main__":
 
 ### Running the Application
 
-You can run the application with the following command in the OS terminal:
-
+You can run the application using the following command in your OS terminal:
 ```bash
 $ ezy run start
 ```
@@ -219,17 +231,16 @@ $ ezy run start
 
 ### What is a Service?
 
-In Ezy API, a **Service** is the core component responsible for processing requests and performing business logic.  
-It functions similarly to [Nest.js](https://nestjs.com)'s Controller and Service, but Ezy API is designed to allow you to build an API with just services in a much more concise and intuitive way.
+In Ezy API, a **Service** is a core component that handles requests and performs business logic.  
+It plays a similar role to Controllers or Services in [Nest.js](https://nestjs.com), but Ezy API is designed to allow you to configure APIs with just services in a more concise and intuitive way.
 
 ### Service Structure
 
-Services are created by inheriting the `EzyService` class.  
-Here’s an example of a basic service:
-
-> **Tip**  
-> 
-> You can generate a service using ```$ ezy g res user```
+A service is created by inheriting from the `EzyService` class.  
+Below is an example of a basic service:
+> **Tip**
+>
+> You can create a service using ```$ ezy g res user```
 
 ```python
 # app_service.py
@@ -240,33 +251,33 @@ class AppService(EzyService):
         return "Hello, World!"
 ```
 
-- By inheriting `EzyService`, you can define API endpoints as asynchronous functions within the service.
-- The function name automatically becomes the API endpoint URL.
-  - For example, the `get_user` function is automatically mapped to the `/user/` path with the `GET` method.
-    - However, if the service name is `app`, it is mapped to the root path.
-- Functions are defined as `async` to allow asynchronous processing.
+- By inheriting from `EzyService`, you can define API endpoints as asynchronous functions within the service.
+- The function name becomes the API endpoint URL.
+  - For example, a function called `get_user` is automatically mapped to the `/user/` path with the `GET` method.
+    - As an exception, if the service name is `app`, it's mapped to the root path.
+- Functions can be defined with `async` to enable asynchronous processing.
 
 ### URL Mapping Rules
 
-The function name in a service is automatically mapped to a URL endpoint.
+The function names of the service are automatically mapped to URL endpoints.
 
-| Function Name    | HTTP Method | URL          |
-|:----------------:|:-----------:|:------------:|
-| `get_user`       | GET         | `/user/`     |
-| `list_users`     | GET         | `/user/`     |
-| `create_user`    | POST        | `/user/`     |
-| `update_user`    | PUT         | `/user/`     |
-| `delete_user`    | DELETE      | `/user/`     |
-| `edit_user`      | PATCH       | `/user/`     |
+| Function Name | HTTP Method | URL |
+|:---:|:---:|:---|
+|`get_user`|GET|`/user/`|
+|`list_users`|GET|`/user/`|
+|`create_user`|POST|`/user/`|
+|`update_user`|PUT|`/user/`|
+|`delete_user`|DELETE|`/user/`|
+|`edit_user`|PATCH|`/user/`|
 
-> **Tip**  
+> **Tip**
 > 
-> Methods like `get`, `update`, `delete`, `edit` can use path parameters like `by_id`, etc.  
-> For example: `get_user_by_id` ➡️ `GET /user/{id}`
+> The `get`, `update`, `delete`, `edit` methods can use `by_id` etc. to `use path parameters`
+> Example: `get_user_by_id` ➡️ `GET /user/{id}`
 
-### Registering a Service
+### Service Registration
 
-Services can be registered to the EzyAPI instance in `main.py`:
+Services can be registered to the EzyAPI instance in `main.py`.
 
 ```python
 # main.py
@@ -279,11 +290,9 @@ if __name__ == "__main__":
     app.run(port=8000)
 ```
 
----
-
 ### Path Parameter Example
 
-Ezy API automatically maps path parameters to the URL when you add `by_id`, `by_name`, etc., to a function name.
+Ezy API automatically maps parameters to URL paths when you add `by_id`, `by_name`, etc. to the function name.
 
 ```python
 # user_service.py
@@ -294,8 +303,8 @@ class UserService(EzyService):
         return {"id": id, "name": "John Doe"}
 ```
 
-- `get_user_by_id` ➡️ `GET /user/{id}` is automatically mapped.
-- The `id` is used as a path parameter in the URL.
+- `get_user_by_id` ➡️ Automatically mapped to the `GET /user/{id}` path.
+- `id` is used as a `path parameter` in the URL path.
 
 **Request Example**
 ```http
@@ -312,7 +321,7 @@ GET /user/10
 
 ### Query Parameter Example
 
-Query parameters can be received as query strings by defining `Optional` and default values for function arguments.
+Query parameters can be received as query strings by defining `Optional` and default values in function arguments.
 
 ```python
 # user_service.py
@@ -331,7 +340,7 @@ class UserService(EzyService):
 ```
 
 - `list_users` ➡️ `GET /user/`
-- You can pass `name` and `age` as query parameters.
+- You can pass `name` and `age` as query strings.
 
 **Request Example**
 ```http
@@ -349,11 +358,9 @@ GET /user/?name=Alice&age=30
 ]
 ```
 
----
-
 ### Decorator Example (@route)
 
-You can manually specify the URL and method by using the `@route()` decorator on a service function.
+You can manually specify the URL and method by using the `@route()` decorator directly on service functions.
 
 ```python
 # user_service.py
@@ -366,8 +373,8 @@ class UserService(EzyService):
         return {"name": name, "email": "example@example.com"}
 ```
 
-- `@route('get', '/name/{name}')` ➡️ `GET /name/{name}` is mapped.
-- The `description` is used for API documentation.
+- `@route('get', '/name/{name}')` ➡️ Sets the path to `GET /name/{name}`.
+- `description` is used for API documentation.
 
 **Request Example**
 ```http
@@ -384,10 +391,183 @@ GET /name/Alice
 
 > **Tip**  
 > 
-> Using the `@route()` decorator overrides automatic mapping, allowing you to freely set the desired URL and HTTP method.
+> Using the `@route()` decorator allows you to override automatic mapping and freely set the desired URL and HTTP method.
 
 </br>
 </br>
 </br>
 
 # CLI Overview
+
+Ezy CLI is a command-line interface tool designed to simplify Ezy API project management. It provides various commands to easily perform project creation, building, testing, and execution.
+
+### Installation
+
+Ezy CLI can be installed using pip:
+
+```bash
+$ pip install ezyapi
+```
+
+> **Note**
+>
+> Make sure Python 3.11 or higher is installed on your system.
+
+### Commands
+
+Ezy CLI supports the following commands:
+
+| Command | Description |
+|:---|:---|
+|`new <project_name>`|Creates a new Ezy API project with the specified name.|
+|`generate <type> <name>` or `g <type> <name>`|Generates a component of the specified type (e.g., 'res' for resource) and name.|
+|`install [packages...]` or `install -r <requirements.txt>`|Installs dependencies in the ezy_modules directory. You can specify packages directly or use a requirements.txt file.|
+|`run <script>`|Runs scripts defined in ezy.json (e.g., 'dev' or 'start').|
+|`test`|Runs tests in the 'test' directory using pytest.|
+|`lint`|Checks code style using flake8.|
+|`info`|Displays CLI version, Python version, platform, and current directory information.|
+|`init [project_name]`|Initializes a new Ezy project in the current directory. If no project name is specified, the current directory name is used.|
+
+### Examples
+
+#### Create a New Project
+
+```bash
+$ ezy new my_project
+```
+
+Creates the basic structure of an Ezy API project in a directory named `my_project`.
+
+#### Generate a Resource
+
+```bash
+$ ezy generate res user
+```
+
+Creates a resource named "user", optionally including CRUD operations.
+
+#### Install Dependencies
+
+To install dependencies listed in ezy.json:
+
+```bash
+$ ezy install
+```
+
+To install specific packages:
+
+```bash
+$ ezy install requests numpy
+```
+
+To install from a requirements.txt file:
+
+```bash
+$ ezy install -r requirements.txt
+```
+
+#### Run Scripts
+
+Assuming scripts are defined in ezy.json, for example:
+
+```json
+{
+  "scripts": {
+    "start": "python3 main.py",
+    "dev": "python3 main.py --dev"
+  }
+}
+```
+
+You can execute them as follows:
+
+```bash
+$ ezy run start
+```
+
+#### Run Tests
+
+To run tests:
+
+```bash
+$ ezy test
+```
+
+> **Note**
+> 
+> pytest must be installed.
+
+#### Lint Code
+
+To check for code style issues:
+
+```bash
+$ ezy lint
+```
+
+> **Note**
+> 
+> flake8 must be installed.
+
+#### View Information
+
+To display CLI and system information:
+
+```bash
+$ ezy info
+```
+
+#### Initialize a Project
+
+To initialize a new Ezy project in the current directory:
+
+```bash
+$ ezy init
+```
+
+### Project Structure
+
+When you create a new project with the `ezy new <project_name>` command, the following structure is created:
+
+```
+project_name/
+├── ezy.json
+├── main.py
+├── app_service.py
+├── test/
+│   └── (test files)
+├── ezy_modules/
+│   └── (installed dependencies)
+└── .gitignore
+```
+
+* `ezy.json`: Project settings (including dependencies and scripts).
+* `main.py`: Application entry point.
+* `app_service.py`: Example service.
+* `test/`: Directory for test files.
+* `ezy_modules/`: Directory for project-specific dependencies.
+* `.gitignore`: Git ignore file.
+
+When you generate a resource with the `ezy generate res <name>` command, the following structure is created:
+
+```
+<name>/
+├── __init__.py
+├── dto/
+│   ├── __init__.py
+│   ├── <name>_create_dto.py
+│   └── <name>_update_dto.py
+├── entity/
+│   ├── __init__.py
+│   └── <name>_entity.py
+└── <name>_service.py
+```
+
+A test file is also created at `test/test_<name>_service.py`.
+
+> **Note**
+> 
+> * The CLI uses color codes to enhance readability in terminals that support ANSI colors.
+> * The `test` command requires pytest to be installed. It is included in the default dependencies of new projects.
+> * The `lint` command requires flake8. You may need to install it separately.
+> * The `update` command currently only simulates updates without actually performing them.
