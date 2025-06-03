@@ -930,6 +930,10 @@ def run_script(args):
     if not script_cmd:
         print(f"{RED}Error: Script '{args.script}' not found in ezy.json.{RESET}", file=sys.stderr)
         sys.exit(1)
+    
+    if hasattr(args, 'extra_args') and args.extra_args:
+        script_cmd = script_cmd + " " + " ".join(args.extra_args)
+    
     print(f"{GREEN}Running script '{args.script}': {YELLOW}{script_cmd}{RESET}")
     modules_path = os.path.join(os.getcwd(), "ezy_modules")
     current_pythonpath = os.environ.get("PYTHONPATH", "")
@@ -957,6 +961,7 @@ def main():
     install_parser.set_defaults(func=lambda args: install_dependencies(args))
     run_parser = subparsers.add_parser("run", help="Run a script defined in ezy.json (e.g., 'ezy run dev' or 'ezy run start')")
     run_parser.add_argument("script", nargs="?", help="Name of the script to run")
+    run_parser.add_argument("extra_args", nargs="*", help="Additional arguments to pass to the script")
     run_parser.set_defaults(func=lambda args: run_script(args))
     build_parser = subparsers.add_parser("build", help="Build the project (syntax check)")
     build_parser.set_defaults(func=lambda args: build_project())
