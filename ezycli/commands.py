@@ -978,7 +978,14 @@ def main():
     init_parser = subparsers.add_parser("init", help="Initialize a new Ezy project in the current directory")
     init_parser.add_argument("project_name", nargs='?', default=None, help="Name of the project (default: current directory name)")
     init_parser.set_defaults(func=lambda args: init_project(args.project_name))
-    args = parser.parse_args()
+    
+    args, unknown = parser.parse_known_args()
+    
+    if hasattr(args, 'command') and args.command == 'run' and unknown:
+        if not hasattr(args, 'extra_args'):
+            args.extra_args = []
+        args.extra_args.extend(unknown)
+    
     if not args.command: 
         parser.print_help()
         sys.exit(1)
