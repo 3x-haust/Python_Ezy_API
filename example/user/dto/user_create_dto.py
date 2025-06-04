@@ -1,7 +1,7 @@
 from typing import Optional
-from pydantic import BaseModel
+from ezyapi import EzyBaseDTO
 
-class UserCreateDTO(BaseModel):
+class UserCreateDTO(EzyBaseDTO):
     name: str
     email: str
     age: Optional[int] = None

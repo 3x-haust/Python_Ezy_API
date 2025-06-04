@@ -618,18 +618,18 @@ class {name.capitalize()}Entity(EzyEntityBase):
         print_create_message(entity_path)
         create_dto_path = os.path.join(dto_dir, f"{name.lower()}_create_dto.py")
         if fields:
-            create_dto_content = f"""from pydantic import BaseModel
+            create_dto_content = f"""from ezyapi import EzyBaseDTO
 
-class {name.capitalize()}CreateDTO(BaseModel):
+class {name.capitalize()}CreateDTO(EzyBaseDTO):
 """
             for field, field_type in fields.items():
                 if field != "id":
                     create_dto_content += f"    {field}: {field_type}\n"
             create_dto_content += "\n"
         else:
-            create_dto_content = f"""from pydantic import BaseModel
+            create_dto_content = f"""from ezyapi import EzyBaseDTO
 
-class {name.capitalize()}CreateDTO(BaseModel):
+class {name.capitalize()}CreateDTO(EzyBaseDTO):
     pass
 """
         with open(create_dto_path, "w", encoding="utf-8") as f:
@@ -638,17 +638,17 @@ class {name.capitalize()}CreateDTO(BaseModel):
 
         update_dto_path = os.path.join(dto_dir, f"{name.lower()}_update_dto.py")
         if fields:
-            update_dto_content = f"""from pydantic import BaseModel
+            update_dto_content = f"""from ezyapi import EzyBaseDTO
 
-class {name.capitalize()}UpdateDTO(BaseModel):
+class {name.capitalize()}UpdateDTO(EzyBaseDTO):
 """
             for field, field_type in fields.items():
                 update_dto_content += f"    {field}: {field_type}\n"
             update_dto_content += "\n"
         else:
-            update_dto_content = f"""from pydantic import BaseModel
+            update_dto_content = f"""from ezyapi import EzyBaseDTO
 
-class {name.capitalize()}UpdateDTO(BaseModel):
+class {name.capitalize()}UpdateDTO(EzyBaseDTO):
     pass
 """
         with open(update_dto_path, "w", encoding="utf-8") as f:

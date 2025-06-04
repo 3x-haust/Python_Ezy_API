@@ -52,7 +52,10 @@ class PostgreSQLRepository(EzyRepository[T]):
         """
         엔티티에 해당하는 테이블이 존재하는지 확인하고, 없으면 생성합니다.
         """
+        from ezyapi.database.decorators import get_column_metadata
+        
         entity_instance = self.entity_class()
+        column_metadata = get_column_metadata(self.entity_class)
         columns = []
         
         for attr_name, attr_value in entity_instance.__dict__.items():
@@ -68,13 +71,28 @@ class PostgreSQLRepository(EzyRepository[T]):
                 sql_type = "REAL"
             elif attr_type == bool:
                 sql_type = "BOOLEAN"
+            
+            meta = column_metadata.get(attr_name)
+            if meta:
+                if meta.column_type:
+                    sql_type = meta.column_type
                 
-            if attr_name == 'id':
-                columns.append(f"{attr_name} SERIAL PRIMARY KEY")
+                if meta.primary:
+                    if meta.auto_increment:
+                        columns.append(f'"{attr_name}" SERIAL PRIMARY KEY')
+                    else:
+                        columns.append(f'"{attr_name}" {sql_type} PRIMARY KEY')
+                else:
+                    nullable = " NOT NULL" if not meta.nullable else ""
+                    unique = " UNIQUE" if meta.unique else ""
+                    columns.append(f'"{attr_name}" {sql_type}{nullable}{unique}')
             else:
-                columns.append(f"{attr_name} {sql_type}")
+                if attr_name == 'id':
+                    columns.append(f'"{attr_name}" SERIAL PRIMARY KEY')
+                else:
+                    columns.append(f'"{attr_name}" {sql_type}')
                 
-        create_table_sql = f"CREATE TABLE IF NOT EXISTS {self.table_name} ({', '.join(columns)});"
+        create_table_sql = f'CREATE TABLE IF NOT EXISTS "{self.table_name}" ({", ".join(columns)});'
         
         conn = self._get_conn()
         cursor = conn.cursor()
@@ -98,40 +116,40 @@ class PostgreSQLRepository(EzyRepository[T]):
         
         for key, value in conditions.items():
             if isinstance(value, Not):
-                where_parts.append(f"{key} != %s")
+                where_parts.append(f'"{key}" != %s')
                 values.append(value.value)
             elif isinstance(value, LessThan):
-                where_parts.append(f"{key} < %s")
+                where_parts.append(f'"{key}" < %s')
                 values.append(value.value)
             elif isinstance(value, LessThanOrEqual):
-                where_parts.append(f"{key} <= %s")
+                where_parts.append(f'"{key}" <= %s')
                 values.append(value.value)
             elif isinstance(value, MoreThan):
-                where_parts.append(f"{key} > %s")
+                where_parts.append(f'"{key}" > %s')
                 values.append(value.value)
             elif isinstance(value, MoreThanOrEqual):
-                where_parts.append(f"{key} >= %s")
+                where_parts.append(f'"{key}" >= %s')
                 values.append(value.value)
             elif isinstance(value, Equal):
-                where_parts.append(f"{key} = %s")
+                where_parts.append(f'"{key}" = %s')
                 values.append(value.value)
             elif isinstance(value, Like):
-                where_parts.append(f"{key} LIKE %s")
+                where_parts.append(f'"{key}" LIKE %s')
                 values.append(value.value)
             elif isinstance(value, ILike):
-                where_parts.append(f"{key} ILIKE %s")
+                where_parts.append(f'"{key}" ILIKE %s')
                 values.append(value.value)
             elif isinstance(value, Between):
-                where_parts.append(f"{key} BETWEEN %s AND %s")
+                where_parts.append(f'"{key}" BETWEEN %s AND %s')
                 values.extend([value.min, value.max])
             elif isinstance(value, In):
                 placeholders = ', '.join('%s' for _ in value.values)
-                where_parts.append(f"{key} IN ({placeholders})")
+                where_parts.append(f'"{key}" IN ({placeholders})')
                 values.extend(value.values)
             elif isinstance(value, IsNull):
-                where_parts.append(f"{key} IS NULL")
+                where_parts.append(f'"{key}" IS NULL')
             else:
-                where_parts.append(f"{key} = %s")
+                where_parts.append(f'"{key}" = %s')
                 values.append(value)
                 
         return where_parts, values
@@ -172,8 +190,8 @@ class PostgreSQLRepository(EzyRepository[T]):
         Returns:
             List[T]: 검색된 엔티티 목록
         """
-        fields = ', '.join(select) if select else '*'
-        query = f"SELECT {fields} FROM {self.table_name}"
+        fields = ', '.join(f'"{field}"' for field in select) if select else '*'
+        query = f'SELECT {fields} FROM "{self.table_name}"'
         values = []
         
         if where:
@@ -190,7 +208,7 @@ class PostgreSQLRepository(EzyRepository[T]):
                 values.extend(vals)
                 
         if order:
-            order_clause = ', '.join(f"{k} {v}" for k, v in order.items())
+            order_clause = ', '.join(f'"{k}" {v}' for k, v in order.items())
             query += f" ORDER BY {order_clause}"
             
         if skip is not None and take is not None:
@@ -224,8 +242,8 @@ class PostgreSQLRepository(EzyRepository[T]):
         Returns:
             Optional[T]: 검색된 엔티티 또는 None
         """
-        fields = ', '.join(select) if select else '*'
-        query = f"SELECT {fields} FROM {self.table_name}"
+        fields = ', '.join(f'"{field}"' for field in select) if select else '*'
+        query = f'SELECT {fields} FROM "{self.table_name}"'
         values = []
         
         if where:
@@ -254,7 +272,7 @@ class PostgreSQLRepository(EzyRepository[T]):
     
     async def save(self, entity: T) -> T:
         """
-        엔티티를 저장합니다. id가 없으면 생성하고, 있으면 업데이트합니다.
+        엔티티를 저장합니다. primary key가 없으면 생성하고, 있으면 업데이트합니다.
         
         Args:
             entity: 저장할 엔티티 인스턴스
@@ -266,42 +284,69 @@ class PostgreSQLRepository(EzyRepository[T]):
         cursor = conn.cursor()
         attrs = {k: v for k, v in entity.__dict__.items() if not k.startswith('_')}
         
-        if getattr(entity, 'id', None) is None:
-            columns = ', '.join(k for k in attrs.keys() if k != 'id')
-            placeholders = ', '.join('%s' for _ in range(len(attrs) - (1 if 'id' in attrs else 0)))
-            values = [v for k, v in attrs.items() if k != 'id']
+        pk_info = entity.get_primary_key_info()
+        pk_field = pk_info['field_name']
+        pk_auto_increment = pk_info['auto_increment']
+        
+        pk_value = getattr(entity, pk_field, None)
+        
+        try:
+            if pk_auto_increment and pk_value is None:
+                columns = ', '.join(f'"{k}"' for k in attrs.keys() if k != pk_field)
+                placeholders = ', '.join('%s' for _ in range(len(attrs) - (1 if pk_field in attrs else 0)))
+                values = [v for k, v in attrs.items() if k != pk_field]
+                
+                query = f'INSERT INTO "{self.table_name}" ({columns}) VALUES ({placeholders}) RETURNING "{pk_field}";'
+                cursor.execute(query, values)
+                setattr(entity, pk_field, cursor.fetchone()[0])
+            elif not pk_auto_increment and pk_value is None:
+                raise ValueError(f"Primary key '{pk_field}' 값이 필요합니다.")
+            elif pk_value is not None:
+                check_query = f'SELECT COUNT(*) FROM "{self.table_name}" WHERE "{pk_field}" = %s;'
+                cursor.execute(check_query, (pk_value,))
+                exists = cursor.fetchone()[0] > 0
+                
+                if exists:
+                    set_clause = ', '.join(f'"{k}" = %s' for k in attrs.keys() if k != pk_field)
+                    values = [v for k, v in attrs.items() if k != pk_field]
+                    values.append(pk_value)
+                    
+                    query = f'UPDATE "{self.table_name}" SET {set_clause} WHERE "{pk_field}" = %s;'
+                    cursor.execute(query, values)
+                else:
+                    columns = ', '.join(f'"{k}"' for k in attrs.keys())
+                    placeholders = ', '.join('%s' for _ in range(len(attrs)))
+                    values = list(attrs.values())
+                    
+                    query = f'INSERT INTO "{self.table_name}" ({columns}) VALUES ({placeholders});'
+                    cursor.execute(query, values)
             
-            query = f"INSERT INTO {self.table_name} ({columns}) VALUES ({placeholders}) RETURNING id;"
-            cursor.execute(query, values)
-            entity.id = cursor.fetchone()[0]
-        else:
-            set_clause = ', '.join(f"{k} = %s" for k in attrs.keys() if k != 'id')
-            values = [v for k, v in attrs.items() if k != 'id']
-            values.append(attrs.get('id'))
-            
-            query = f"UPDATE {self.table_name} SET {set_clause} WHERE id = %s;"
-            cursor.execute(query, values)
-            
-        conn.commit()
-        cursor.close()
-        conn.close()
+            conn.commit()
+        finally:
+            cursor.close()
+            conn.close()
         
         return entity
     
-    async def delete(self, id: int) -> bool:
+    async def delete(self, pk_value: Any) -> bool:
         """
-        지정된 ID의 엔티티를 삭제합니다.
+        지정된 primary key 값의 엔티티를 삭제합니다.
         
         Args:
-            id: 삭제할 엔티티의 ID
+            pk_value: 삭제할 엔티티의 primary key 값
             
         Returns:
             bool: 삭제 성공 여부
         """
         conn = self._get_conn()
         cursor = conn.cursor()
-        query = f"DELETE FROM {self.table_name} WHERE id = %s;"
-        cursor.execute(query, (id,))
+        
+        entity_instance = self.entity_class()
+        pk_info = entity_instance.get_primary_key_info()
+        pk_field = pk_info['field_name']
+        
+        query = f'DELETE FROM "{self.table_name}" WHERE "{pk_field}" = %s;'
+        cursor.execute(query, (pk_value,))
         conn.commit()
         rowcount = cursor.rowcount
         cursor.close()

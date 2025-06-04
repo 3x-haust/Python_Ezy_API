@@ -1,7 +1,7 @@
 from typing import Optional
-from pydantic import BaseModel
+from ezyapi import EzyBaseDTO
 
-class UserResponseDTO(BaseModel):
+class UserResponseDTO(EzyBaseDTO):
     id: int
     name: str
     email: str

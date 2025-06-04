@@ -6,6 +6,7 @@
 
 from ezyapi.database.config import DatabaseConfig
 from ezyapi.database.entity import EzyEntityBase
+from ezyapi.database.decorators import Column, PrimaryColumn, PrimaryGeneratedColumn
 from ezyapi.database.filters import (
     Not, LessThan, LessThanOrEqual, MoreThan, MoreThanOrEqual,
     Equal, Like, ILike, Between, In, IsNull

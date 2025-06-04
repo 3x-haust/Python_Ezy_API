@@ -33,3 +33,28 @@ class EzyEntityBase:
         id (int, optional): 엔티티의 고유 식별자. 기본값은 None입니다.
     """
     id: int = None
+    
+    def get_primary_key_info(self):
+        """
+        Primary key 정보를 반환합니다.
+        
+        Returns:
+            dict: primary key 필드명과 메타데이터 정보
+        """
+        from ezyapi.database.decorators import get_column_metadata
+        
+        metadata = get_column_metadata(self.__class__)
+        
+        for field_name, meta in metadata.items():
+            if meta.primary:
+                return {
+                    'field_name': field_name,
+                    'auto_increment': meta.auto_increment,
+                    'column_type': meta.column_type
+                }
+        
+        return {
+            'field_name': 'id',
+            'auto_increment': True,
+            'column_type': None
+        }
