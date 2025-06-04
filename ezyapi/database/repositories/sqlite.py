@@ -52,7 +52,10 @@ class SQLiteRepository(EzyRepository[T]):
         """
         엔티티에 해당하는 테이블이 존재하는지 확인하고, 없으면 생성합니다.
         """
+        from ezyapi.database.decorators import get_column_metadata
+        
         entity_instance = self.entity_class()
+        column_metadata = get_column_metadata(self.entity_class)
         columns = []
         
         for attr_name, attr_value in entity_instance.__dict__.items():
@@ -68,11 +71,26 @@ class SQLiteRepository(EzyRepository[T]):
                 sql_type = "REAL"
             elif attr_type == bool:
                 sql_type = "INTEGER"
+            
+            meta = column_metadata.get(attr_name)
+            if meta:
+                if meta.column_type:
+                    sql_type = meta.column_type
                 
-            if attr_name == 'id':
-                columns.append(f"{attr_name} INTEGER PRIMARY KEY AUTOINCREMENT")
+                if meta.primary:
+                    if meta.auto_increment:
+                        columns.append(f"{attr_name} {sql_type} PRIMARY KEY AUTOINCREMENT")
+                    else:
+                        columns.append(f"{attr_name} {sql_type} PRIMARY KEY")
+                else:
+                    nullable = " NOT NULL" if not meta.nullable else ""
+                    unique = " UNIQUE" if meta.unique else ""
+                    columns.append(f"{attr_name} {sql_type}{nullable}{unique}")
             else:
-                columns.append(f"{attr_name} {sql_type}")
+                if attr_name == 'id':
+                    columns.append(f"{attr_name} INTEGER PRIMARY KEY AUTOINCREMENT")
+                else:
+                    columns.append(f"{attr_name} {sql_type}")
                 
         create_table_sql = f"CREATE TABLE IF NOT EXISTS {self.table_name} ({', '.join(columns)});"
         
@@ -244,7 +262,7 @@ class SQLiteRepository(EzyRepository[T]):
     
     async def save(self, entity: T) -> T:
         """
-        엔티티를 저장합니다. id가 없으면 생성하고, 있으면 업데이트합니다.
+        엔티티를 저장합니다. primary key가 없으면 생성하고, 있으면 업데이트합니다.
         
         Args:
             entity: 저장할 엔티티 인스턴스
@@ -256,36 +274,60 @@ class SQLiteRepository(EzyRepository[T]):
             cursor = conn.cursor()
             attrs = {k: v for k, v in entity.__dict__.items() if not k.startswith('_')}
             
-            if getattr(entity, 'id', None) is None:
-                columns = ', '.join(k for k in attrs.keys() if k != 'id')
-                placeholders = ', '.join('?' for _ in range(len(attrs) - (1 if 'id' in attrs else 0)))
-                values = [v for k, v in attrs.items() if k != 'id']
+            pk_info = entity.get_primary_key_info()
+            pk_field = pk_info['field_name']
+            pk_auto_increment = pk_info['auto_increment']
+            
+            pk_value = getattr(entity, pk_field, None)
+            
+            if pk_auto_increment and pk_value is None:
+                columns = ', '.join(k for k in attrs.keys() if k != pk_field)
+                placeholders = ', '.join('?' for _ in range(len(attrs) - (1 if pk_field in attrs else 0)))
+                values = [v for k, v in attrs.items() if k != pk_field]
                 
                 query = f"INSERT INTO {self.table_name} ({columns}) VALUES ({placeholders});"
                 cursor.execute(query, values)
-                setattr(entity, 'id', cursor.lastrowid)
-            else:
-                set_clause = ', '.join(f"{k} = ?" for k in attrs.keys() if k != 'id')
-                values = [v for k, v in attrs.items() if k != 'id']
-                values.append(attrs.get('id'))
+                setattr(entity, pk_field, cursor.lastrowid)
+            elif not pk_auto_increment and pk_value is None:
+                raise ValueError(f"Primary key '{pk_field}' 값이 필요합니다.")
+            elif pk_value is not None:
+                check_query = f"SELECT COUNT(*) FROM {self.table_name} WHERE {pk_field} = ?;"
+                cursor.execute(check_query, (pk_value,))
+                exists = cursor.fetchone()[0] > 0
                 
-                query = f"UPDATE {self.table_name} SET {set_clause} WHERE id = ?;"
-                cursor.execute(query, values)
+                if exists:
+                    set_clause = ', '.join(f"{k} = ?" for k in attrs.keys() if k != pk_field)
+                    values = [v for k, v in attrs.items() if k != pk_field]
+                    values.append(pk_value)
+                    
+                    query = f"UPDATE {self.table_name} SET {set_clause} WHERE {pk_field} = ?;"
+                    cursor.execute(query, values)
+                else:
+                    columns = ', '.join(attrs.keys())
+                    placeholders = ', '.join('?' for _ in range(len(attrs)))
+                    values = list(attrs.values())
+                    
+                    query = f"INSERT INTO {self.table_name} ({columns}) VALUES ({placeholders});"
+                    cursor.execute(query, values)
                 
             return entity
     
-    async def delete(self, id: int) -> bool:
+    async def delete(self, id: Any) -> bool:
         """
-        지정된 ID의 엔티티를 삭제합니다.
+        지정된 Primary Key의 엔티티를 삭제합니다.
         
         Args:
-            id: 삭제할 엔티티의 ID
+            id: 삭제할 엔티티의 Primary Key 값
             
         Returns:
             bool: 삭제 성공 여부
         """
+        entity_instance = self.entity_class()
+        pk_info = entity_instance.get_primary_key_info()
+        pk_field = pk_info['field_name']
+        
         with self._get_conn() as conn:
             cursor = conn.cursor()
-            query = f"DELETE FROM {self.table_name} WHERE id = ?;"
+            query = f"DELETE FROM {self.table_name} WHERE {pk_field} = ?;"
             cursor.execute(query, (id,))
             return cursor.rowcount > 0

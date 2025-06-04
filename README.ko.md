@@ -36,6 +36,14 @@
     - [경로 파라미터 예시](#경로-파라미터-예시)
     - [쿼리 파라미터 예시](#쿼리-파라미터-예시)
     - [데코레이터 예시 (@route)](#데코레이터-예시-route)
+- [데이터베이스와 엔티티](#데이터베이스와-엔티티)
+  - [데이터베이스 설정](#데이터베이스-설정)
+  - [엔티티 정의](#엔티티-정의)
+    - [기본 엔티티 (간단한 방법)](#기본-엔티티-간단한-방법)
+    - [어노테이션을 사용한 고급 엔티티](#어노테이션을-사용한-고급-엔티티)
+    - [컬럼 어노테이션 타입](#컬럼-어노테이션-타입)
+    - [컬럼 옵션](#컬럼-옵션)
+    - [다양한 Primary Key 예시](#다양한-primary-key-예시)
 - [CLI 개요](#cli-개요)
     - [설치](#설치)
     - [명령어](#명령어)
@@ -392,6 +400,138 @@ GET /name/Alice
 > **팁**  
 > 
 > `@route()` 데코레이터를 사용하면 자동 매핑을 오버라이드하여 원하는 URL, HTTP 메서드를 자유롭게 설정할 수 있습니다.
+
+</br>
+</br>
+</br>
+
+# 데이터베이스와 엔티티
+
+### 데이터베이스 설정
+
+Ezy API는 SQLite, MySQL, PostgreSQL, MongoDB 등 다양한 데이터베이스 타입을 지원합니다.
+
+```python
+# main.py
+from ezyapi import EzyAPI
+from ezyapi.database import DatabaseConfig
+from user.user_service import UserService
+
+if __name__ == "__main__":
+    app = EzyAPI()
+    
+    # SQLite 설정
+    db_config = DatabaseConfig(
+        type="sqlite",
+        path="./app.db"
+    )
+    
+    # 또는 MySQL 설정
+    # db_config = DatabaseConfig(
+    #     type="mysql",
+    #     host="localhost",
+    #     port=3306,
+    #     username="root",
+    #     password="password",
+    #     database="myapp"
+    # )
+    
+    app.add_database(db_config)
+    app.add_service(UserService)
+    app.run(port=8000)
+```
+
+### 엔티티 정의
+
+엔티티는 `EzyEntityBase`를 상속받아 정의합니다. 고급 컬럼 설정을 위해 TypeORM 스타일의 어노테이션을 사용할 수 있습니다.
+
+#### 기본 엔티티 (간단한 방법)
+
+```python
+# user/entity/user_entity.py
+from ezyapi import EzyEntityBase
+
+class UserEntity(EzyEntityBase):
+    def __init__(self, name: str = "", email: str = ""):
+        self.name = name
+        self.email = email
+    
+    # 기본값: id가 자동 증가 primary key가 됨
+    id: int = None
+    name: str = ""
+    email: str = ""
+```
+
+#### 어노테이션을 사용한 고급 엔티티
+
+데이터베이스 컬럼에 대한 더 세밀한 제어를 위해 TypeORM 스타일의 어노테이션을 사용할 수 있습니다:
+
+```python
+# user/entity/user_entity.py
+from ezyapi import EzyEntityBase, PrimaryColumn, PrimaryGeneratedColumn, Column
+from typing import Annotated, Optional
+
+class UserEntity(EzyEntityBase):
+    def __init__(self, id: int = 0, name: str = "", major: Optional[str] = None, 
+                 grade: Optional[int] = None, isTeacher: bool = None):
+        self.id = id
+        self.name = name
+        self.major = major
+        self.grade = grade
+        self.isTeacher = isTeacher
+    
+    # 특정 컬럼 타입을 가진 커스텀 primary key
+    id: Annotated[int, PrimaryColumn(column_type="INT")] = 0
+    
+    # 선택사항: 특별한 설정이 필요한 필드에만 어노테이션 추가
+    name: Annotated[str, Column(nullable=False, column_type="VARCHAR(100)")] = ""
+    major: Optional[str] = None
+    grade: Optional[int] = None
+    isTeacher: bool = None
+```
+
+#### 컬럼 어노테이션 타입
+
+| 어노테이션 | 설명 | 예시 |
+|:---|:---|:---|
+| `PrimaryColumn()` | 커스텀 primary key (사용자 지정 값) | `id: Annotated[str, PrimaryColumn(column_type="VARCHAR(50)")] = None` |
+| `PrimaryGeneratedColumn()` | 자동 증가 primary key | `id: Annotated[int, PrimaryGeneratedColumn(column_type="BIGINT")] = None` |
+| `Column()` | 옵션이 있는 일반 컬럼 | `name: Annotated[str, Column(nullable=False, unique=True)] = ""` |
+
+#### 컬럼 옵션
+
+- `column_type`: 데이터베이스 컬럼 타입 지정 (예: "VARCHAR(100)", "TEXT", "BIGINT")
+- `nullable`: 컬럼이 NULL을 허용할지 여부 (기본값: True)
+- `unique`: 컬럼에 unique 제약조건을 적용할지 여부 (기본값: False)
+- `auto_increment`: 컬럼이 자동 증가할지 여부 (Column은 기본값 False, PrimaryGeneratedColumn은 True)
+
+#### 다양한 Primary Key 예시
+
+```python
+# 문자열 primary key
+class ProductEntity(EzyEntityBase):
+    product_code: Annotated[str, PrimaryColumn(column_type="VARCHAR(20)")] = None
+    name: str = ""
+    price: float = 0.0
+
+# 커스텀 자동 증가 primary key
+class OrderEntity(EzyEntityBase):
+    order_id: Annotated[int, PrimaryGeneratedColumn(column_type="BIGINT")] = None
+    user_id: int = None
+    total_amount: float = 0.0
+
+# UUID primary key
+class SessionEntity(EzyEntityBase):
+    session_token: Annotated[str, PrimaryColumn(column_type="VARCHAR(36)")] = None
+    user_id: int = None
+    expires_at: str = None
+```
+
+> **참고**
+> 
+> - 어노테이션은 **선택사항**입니다 - 특별한 데이터베이스 설정이 필요한 필드에만 추가하면 됩니다
+> - 어노테이션이 없는 필드는 기본 동작을 사용합니다 (일반 컬럼)
+> - 다른 primary key가 지정되지 않은 경우 `id: int = None` 필드가 자동으로 자동 증가 primary key가 됩니다
 
 </br>
 </br>

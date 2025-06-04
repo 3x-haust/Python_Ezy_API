@@ -179,7 +179,7 @@ class MongoDBRepository(EzyRepository[T]):
     
     async def save(self, entity: T) -> T:
         """
-        엔티티를 저장합니다. id가 없으면 생성하고, 있으면 업데이트합니다.
+        엔티티를 저장합니다. primary key가 없으면 생성하고, 있으면 업데이트합니다.
         
         Args:
             entity: 저장할 엔티티 인스턴스
@@ -190,27 +190,60 @@ class MongoDBRepository(EzyRepository[T]):
         collection = self.db[self.collection_name]
         data = entity.__dict__.copy()
         
-        if data.get("id") is None:
-            data.pop("id", None)
-            result = await collection.insert_one(data)
-            entity.id = result.inserted_id
+        pk_info = entity.get_primary_key_info()
+        pk_field = pk_info['field_name']
+        pk_auto_increment = pk_info['auto_increment']
+        
+        pk_value = getattr(entity, pk_field, None)
+        
+        # MongoDB의 경우, _id가 기본 primary key
+        if pk_field == 'id':
+            mongo_pk_field = '_id'
         else:
-            id_val = entity.id
-            data.pop("id", None)
-            await collection.update_one({"_id": id_val}, {"$set": data})
+            mongo_pk_field = pk_field
+        
+        if pk_auto_increment and pk_value is None:
+            # Auto increment primary key인 경우 INSERT
+            data.pop(pk_field, None)
+            result = await collection.insert_one(data)
+            setattr(entity, pk_field, result.inserted_id)
+        elif not pk_auto_increment and pk_value is None:
+            raise ValueError(f"Primary key '{pk_field}' 값이 필요합니다.")
+        elif pk_value is not None:
+            # Primary key가 있는 경우 UPDATE 또는 INSERT
+            filter_dict = {mongo_pk_field: pk_value}
+            data_to_save = {k: v for k, v in data.items() if k != pk_field}
+            
+            await collection.update_one(
+                filter_dict, 
+                {"$set": data_to_save},
+                upsert=True
+            )
             
         return entity
     
-    async def delete(self, id: int) -> bool:
+    async def delete(self, pk_value: Any) -> bool:
         """
-        지정된 ID의 엔티티를 삭제합니다.
+        지정된 primary key 값의 엔티티를 삭제합니다.
         
         Args:
-            id: 삭제할 엔티티의 ID
+            pk_value: 삭제할 엔티티의 primary key 값
             
         Returns:
             bool: 삭제 성공 여부
         """
         collection = self.db[self.collection_name]
-        result = await collection.delete_one({"_id": id})
+        
+        # Entity 클래스의 인스턴스를 생성해서 primary key 정보를 가져옵니다
+        entity_instance = self.entity_class()
+        pk_info = entity_instance.get_primary_key_info()
+        pk_field = pk_info['field_name']
+        
+        # MongoDB의 경우, _id가 기본 primary key
+        if pk_field == 'id':
+            mongo_pk_field = '_id'
+        else:
+            mongo_pk_field = pk_field
+        
+        result = await collection.delete_one({mongo_pk_field: pk_value})
         return result.deleted_count > 0

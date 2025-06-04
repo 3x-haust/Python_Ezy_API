@@ -36,6 +36,14 @@ This README is the English version.
     - [Path Parameter Example](#path-parameter-example)
     - [Query Parameter Example](#query-parameter-example)
     - [Decorator Example (@route)](#decorator-example-route)
+- [Database and Entities](#database-and-entities)
+    - [Database Configuration](#database-configuration)
+    - [Entity Definition](#entity-definition)
+      - [Basic Entity (Simple Approach)](#basic-entity-simple-approach)
+      - [Advanced Entity with Annotations](#advanced-entity-with-annotations)
+      - [Column Annotation Types](#column-annotation-types)
+      - [Column Options](#column-options)
+      - [Multiple Primary Key Examples](#multiple-primary-key-examples)
 - [CLI Overview](#cli-overview)
     - [Installation](#installation)
     - [Commands](#commands)
@@ -392,6 +400,138 @@ GET /name/Alice
 > **Tip**  
 > 
 > Using the `@route()` decorator allows you to override automatic mapping and freely set the desired URL and HTTP method.
+
+</br>
+</br>
+</br>
+
+# Database and Entities
+
+### Database Configuration
+
+Ezy API supports multiple database types including SQLite, MySQL, PostgreSQL, and MongoDB.
+
+```python
+# main.py
+from ezyapi import EzyAPI
+from ezyapi.database import DatabaseConfig
+from user.user_service import UserService
+
+if __name__ == "__main__":
+    app = EzyAPI()
+    
+    # SQLite configuration
+    db_config = DatabaseConfig(
+        type="sqlite",
+        path="./app.db"
+    )
+    
+    # Or MySQL configuration
+    # db_config = DatabaseConfig(
+    #     type="mysql",
+    #     host="localhost",
+    #     port=3306,
+    #     username="root",
+    #     password="password",
+    #     database="myapp"
+    # )
+    
+    app.add_database(db_config)
+    app.add_service(UserService)
+    app.run(port=8000)
+```
+
+### Entity Definition
+
+Entities are defined by inheriting from `EzyEntityBase`. You can use TypeORM-style annotations for advanced column configuration.
+
+#### Basic Entity (Simple Approach)
+
+```python
+# user/entity/user_entity.py
+from ezyapi import EzyEntityBase
+
+class UserEntity(EzyEntityBase):
+    def __init__(self, name: str = "", email: str = ""):
+        self.name = name
+        self.email = email
+    
+    # Default: id becomes auto-increment primary key
+    id: int = None
+    name: str = ""
+    email: str = ""
+```
+
+#### Advanced Entity with Annotations
+
+For more control over database columns, you can use TypeORM-style annotations:
+
+```python
+# user/entity/user_entity.py
+from ezyapi import EzyEntityBase, PrimaryColumn, PrimaryGeneratedColumn, Column
+from typing import Annotated, Optional
+
+class UserEntity(EzyEntityBase):
+    def __init__(self, id: int = 0, name: str = "", major: Optional[str] = None, 
+                 grade: Optional[int] = None, isTeacher: bool = None):
+        self.id = id
+        self.name = name
+        self.major = major
+        self.grade = grade
+        self.isTeacher = isTeacher
+    
+    # Custom primary key with specific column type
+    id: Annotated[int, PrimaryColumn(column_type="INT")] = 0
+    
+    # Optional: Add annotations only for fields that need special configuration
+    name: Annotated[str, Column(nullable=False, column_type="VARCHAR(100)")] = ""
+    major: Optional[str] = None
+    grade: Optional[int] = None
+    isTeacher: bool = None
+```
+
+#### Column Annotation Types
+
+| Annotation | Description | Example |
+|:---|:---|:---|
+| `PrimaryColumn()` | Custom primary key (user-provided value) | `id: Annotated[str, PrimaryColumn(column_type="VARCHAR(50)")] = None` |
+| `PrimaryGeneratedColumn()` | Auto-increment primary key | `id: Annotated[int, PrimaryGeneratedColumn(column_type="BIGINT")] = None` |
+| `Column()` | Regular column with options | `name: Annotated[str, Column(nullable=False, unique=True)] = ""` |
+
+#### Column Options
+
+- `column_type`: Specify database column type (e.g., "VARCHAR(100)", "TEXT", "BIGINT")
+- `nullable`: Whether the column can be NULL (default: True)
+- `unique`: Whether the column should have a unique constraint (default: False)
+- `auto_increment`: Whether the column should auto-increment (default: False for Column, True for PrimaryGeneratedColumn)
+
+#### Multiple Primary Key Examples
+
+```python
+# String primary key
+class ProductEntity(EzyEntityBase):
+    product_code: Annotated[str, PrimaryColumn(column_type="VARCHAR(20)")] = None
+    name: str = ""
+    price: float = 0.0
+
+# Custom auto-increment primary key
+class OrderEntity(EzyEntityBase):
+    order_id: Annotated[int, PrimaryGeneratedColumn(column_type="BIGINT")] = None
+    user_id: int = None
+    total_amount: float = 0.0
+
+# UUID primary key
+class SessionEntity(EzyEntityBase):
+    session_token: Annotated[str, PrimaryColumn(column_type="VARCHAR(36)")] = None
+    user_id: int = None
+    expires_at: str = None
+```
+
+> **Note**
+> 
+> - Annotations are **optional** - you only need to add them for fields requiring special database configuration
+> - Fields without annotations use default behavior (regular columns)
+> - The `id: int = None` field automatically becomes an auto-increment primary key if no other primary key is specified
 
 </br>
 </br>

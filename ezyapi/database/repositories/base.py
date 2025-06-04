@@ -74,12 +74,12 @@ class EzyRepository(Generic[T], ABC):
         pass
     
     @abstractmethod
-    async def delete(self, id: int) -> bool:
+    async def delete(self, id: Any) -> bool:
         """
-        지정된 ID의 엔티티를 삭제합니다.
+        지정된 Primary Key의 엔티티를 삭제합니다.
         
         Args:
-            id: 삭제할 엔티티의 ID
+            id: 삭제할 엔티티의 Primary Key 값
             
         Returns:
             bool: 삭제 성공 여부
