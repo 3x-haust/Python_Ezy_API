@@ -196,21 +196,18 @@ class MongoDBRepository(EzyRepository[T]):
         
         pk_value = getattr(entity, pk_field, None)
         
-        # MongoDB의 경우, _id가 기본 primary key
         if pk_field == 'id':
             mongo_pk_field = '_id'
         else:
             mongo_pk_field = pk_field
         
         if pk_auto_increment and pk_value is None:
-            # Auto increment primary key인 경우 INSERT
             data.pop(pk_field, None)
             result = await collection.insert_one(data)
             setattr(entity, pk_field, result.inserted_id)
         elif not pk_auto_increment and pk_value is None:
             raise ValueError(f"Primary key '{pk_field}' 값이 필요합니다.")
         elif pk_value is not None:
-            # Primary key가 있는 경우 UPDATE 또는 INSERT
             filter_dict = {mongo_pk_field: pk_value}
             data_to_save = {k: v for k, v in data.items() if k != pk_field}
             
@@ -234,12 +231,10 @@ class MongoDBRepository(EzyRepository[T]):
         """
         collection = self.db[self.collection_name]
         
-        # Entity 클래스의 인스턴스를 생성해서 primary key 정보를 가져옵니다
         entity_instance = self.entity_class()
         pk_info = entity_instance.get_primary_key_info()
         pk_field = pk_info['field_name']
         
-        # MongoDB의 경우, _id가 기본 primary key
         if pk_field == 'id':
             mongo_pk_field = '_id'
         else:
