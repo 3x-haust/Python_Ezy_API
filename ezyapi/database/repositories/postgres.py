@@ -70,11 +70,11 @@ class PostgreSQLRepository(EzyRepository[T]):
                 sql_type = "BOOLEAN"
                 
             if attr_name == 'id':
-                columns.append(f"{attr_name} SERIAL PRIMARY KEY")
+                columns.append(f'"{attr_name}" SERIAL PRIMARY KEY')
             else:
-                columns.append(f"{attr_name} {sql_type}")
+                columns.append(f'"{attr_name}" {sql_type}')
                 
-        create_table_sql = f"CREATE TABLE IF NOT EXISTS {self.table_name} ({', '.join(columns)});"
+        create_table_sql = f'CREATE TABLE IF NOT EXISTS "{self.table_name}" ({", ".join(columns)});'
         
         conn = self._get_conn()
         cursor = conn.cursor()
@@ -98,40 +98,40 @@ class PostgreSQLRepository(EzyRepository[T]):
         
         for key, value in conditions.items():
             if isinstance(value, Not):
-                where_parts.append(f"{key} != %s")
+                where_parts.append(f'"{key}" != %s')
                 values.append(value.value)
             elif isinstance(value, LessThan):
-                where_parts.append(f"{key} < %s")
+                where_parts.append(f'"{key}" < %s')
                 values.append(value.value)
             elif isinstance(value, LessThanOrEqual):
-                where_parts.append(f"{key} <= %s")
+                where_parts.append(f'"{key}" <= %s')
                 values.append(value.value)
             elif isinstance(value, MoreThan):
-                where_parts.append(f"{key} > %s")
+                where_parts.append(f'"{key}" > %s')
                 values.append(value.value)
             elif isinstance(value, MoreThanOrEqual):
-                where_parts.append(f"{key} >= %s")
+                where_parts.append(f'"{key}" >= %s')
                 values.append(value.value)
             elif isinstance(value, Equal):
-                where_parts.append(f"{key} = %s")
+                where_parts.append(f'"{key}" = %s')
                 values.append(value.value)
             elif isinstance(value, Like):
-                where_parts.append(f"{key} LIKE %s")
+                where_parts.append(f'"{key}" LIKE %s')
                 values.append(value.value)
             elif isinstance(value, ILike):
-                where_parts.append(f"{key} ILIKE %s")
+                where_parts.append(f'"{key}" ILIKE %s')
                 values.append(value.value)
             elif isinstance(value, Between):
-                where_parts.append(f"{key} BETWEEN %s AND %s")
+                where_parts.append(f'"{key}" BETWEEN %s AND %s')
                 values.extend([value.min, value.max])
             elif isinstance(value, In):
                 placeholders = ', '.join('%s' for _ in value.values)
-                where_parts.append(f"{key} IN ({placeholders})")
+                where_parts.append(f'"{key}" IN ({placeholders})')
                 values.extend(value.values)
             elif isinstance(value, IsNull):
-                where_parts.append(f"{key} IS NULL")
+                where_parts.append(f'"{key}" IS NULL')
             else:
-                where_parts.append(f"{key} = %s")
+                where_parts.append(f'"{key}" = %s')
                 values.append(value)
                 
         return where_parts, values
@@ -172,8 +172,8 @@ class PostgreSQLRepository(EzyRepository[T]):
         Returns:
             List[T]: 검색된 엔티티 목록
         """
-        fields = ', '.join(select) if select else '*'
-        query = f"SELECT {fields} FROM {self.table_name}"
+        fields = ', '.join(f'"{field}"' for field in select) if select else '*'
+        query = f'SELECT {fields} FROM "{self.table_name}"'
         values = []
         
         if where:
@@ -190,7 +190,7 @@ class PostgreSQLRepository(EzyRepository[T]):
                 values.extend(vals)
                 
         if order:
-            order_clause = ', '.join(f"{k} {v}" for k, v in order.items())
+            order_clause = ', '.join(f'"{k}" {v}' for k, v in order.items())
             query += f" ORDER BY {order_clause}"
             
         if skip is not None and take is not None:
@@ -224,8 +224,8 @@ class PostgreSQLRepository(EzyRepository[T]):
         Returns:
             Optional[T]: 검색된 엔티티 또는 None
         """
-        fields = ', '.join(select) if select else '*'
-        query = f"SELECT {fields} FROM {self.table_name}"
+        fields = ', '.join(f'"{field}"' for field in select) if select else '*'
+        query = f'SELECT {fields} FROM "{self.table_name}"'
         values = []
         
         if where:
@@ -267,19 +267,19 @@ class PostgreSQLRepository(EzyRepository[T]):
         attrs = {k: v for k, v in entity.__dict__.items() if not k.startswith('_')}
         
         if getattr(entity, 'id', None) is None:
-            columns = ', '.join(k for k in attrs.keys() if k != 'id')
+            columns = ', '.join(f'"{k}"' for k in attrs.keys() if k != 'id')
             placeholders = ', '.join('%s' for _ in range(len(attrs) - (1 if 'id' in attrs else 0)))
             values = [v for k, v in attrs.items() if k != 'id']
             
-            query = f"INSERT INTO {self.table_name} ({columns}) VALUES ({placeholders}) RETURNING id;"
+            query = f'INSERT INTO "{self.table_name}" ({columns}) VALUES ({placeholders}) RETURNING "id";'
             cursor.execute(query, values)
             entity.id = cursor.fetchone()[0]
         else:
-            set_clause = ', '.join(f"{k} = %s" for k in attrs.keys() if k != 'id')
+            set_clause = ', '.join(f'"{k}" = %s' for k in attrs.keys() if k != 'id')
             values = [v for k, v in attrs.items() if k != 'id']
             values.append(attrs.get('id'))
             
-            query = f"UPDATE {self.table_name} SET {set_clause} WHERE id = %s;"
+            query = f'UPDATE "{self.table_name}" SET {set_clause} WHERE "id" = %s;'
             cursor.execute(query, values)
             
         conn.commit()
@@ -300,7 +300,7 @@ class PostgreSQLRepository(EzyRepository[T]):
         """
         conn = self._get_conn()
         cursor = conn.cursor()
-        query = f"DELETE FROM {self.table_name} WHERE id = %s;"
+        query = f'DELETE FROM "{self.table_name}" WHERE "id" = %s;'
         cursor.execute(query, (id,))
         conn.commit()
         rowcount = cursor.rowcount

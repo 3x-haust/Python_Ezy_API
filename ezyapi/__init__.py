@@ -15,4 +15,4 @@ from ezyapi.database.filters import (
 from ezyapi.decorators.route import route
 from ezyapi.dto.base import EzyBaseDTO
 
-__version__ = "1.4.1"
+__version__ = "1.4.3"
