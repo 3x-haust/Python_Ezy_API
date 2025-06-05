@@ -128,20 +128,21 @@ class EzyAPI:
             if method_name.startswith('_'):
                 continue
 
-            method_parts = method_name.split('_')
-            
-            if method_parts[0] == 'list':
-                expected_name = f'list_{service_name}s'
-                if method_name != expected_name:
-                    raise RuntimeError(
-                        f"목록 메소드 이름 규칙 오류: '{method_name}'이 아닌 '{expected_name}'(으)로 이름을 지정해야 합니다."
-                    )
-            elif service_name not in method_name:
-                raise RuntimeError(
-                    f"메소드 이름 규칙 오류: '{method_name}'에는 서비스 이름 '{service_name}'이(가) 포함되어야 합니다."
-                )
-
             custom_route = getattr(method, '__route_info__', None)
+            
+            if not custom_route:
+                method_parts = method_name.split('_')
+                
+                if method_parts[0] == 'list':
+                    expected_name = f'list_{service_name}s'
+                    if method_name != expected_name:
+                        raise RuntimeError(
+                            f"목록 메소드 이름 규칙 오류: '{method_name}'이 아닌 '{expected_name}'(으)로 이름을 지정해야 합니다."
+                        )
+                elif service_name not in method_name:
+                    raise RuntimeError(
+                        f"메소드 이름 규칙 오류: '{method_name}'에는 서비스 이름 '{service_name}'이(가) 포함되어야 합니다."
+                    )
             if custom_route:
                 http_method = custom_route['method']
                 path = custom_route['path']
