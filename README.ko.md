@@ -37,13 +37,18 @@
     - [쿼리 파라미터 예시](#쿼리-파라미터-예시)
     - [데코레이터 예시 (@route)](#데코레이터-예시-route)
 - [데이터베이스와 엔티티](#데이터베이스와-엔티티)
-  - [데이터베이스 설정](#데이터베이스-설정)
-  - [엔티티 정의](#엔티티-정의)
-    - [기본 엔티티 (간단한 방법)](#기본-엔티티-간단한-방법)
-    - [어노테이션을 사용한 고급 엔티티](#어노테이션을-사용한-고급-엔티티)
-    - [컬럼 어노테이션 타입](#컬럼-어노테이션-타입)
-    - [컬럼 옵션](#컬럼-옵션)
-    - [다양한 Primary Key 예시](#다양한-primary-key-예시)
+    - [데이터베이스 설정](#데이터베이스-설정)
+    - [엔티티 정의](#엔티티-정의)
+      - [기본 엔티티 (간단한 방법)](#기본-엔티티-간단한-방법)
+      - [어노테이션을 사용한 고급 엔티티](#어노테이션을-사용한-고급-엔티티)
+      - [컬럼 어노테이션 타입](#컬럼-어노테이션-타입)
+      - [컬럼 옵션](#컬럼-옵션)
+      - [다양한 Primary Key 예시](#다양한-primary-key-예시)
+    - [엔티티 관계](#엔티티-관계)
+      - [관계 정의](#관계-정의)
+      - [관계 타입](#관계-타입)
+      - [관련 데이터 로드](#관련-데이터-로드)
+      - [관계 로드 예시](#관계-로드-예시)
 - [CLI 개요](#cli-개요)
     - [설치](#설치)
     - [명령어](#명령어)
@@ -372,8 +377,7 @@ GET /user/?name=Alice&age=30
 
 ```python
 # user_service.py
-from ezyapi import EzyService
-from ezyapi.core import route
+from ezyapi import EzyService, route
 
 class UserService(EzyService):
     @route('get', '/name/{name}', description="Get user by name")
@@ -532,6 +536,109 @@ class SessionEntity(EzyEntityBase):
 > - 어노테이션은 **선택사항**입니다 - 특별한 데이터베이스 설정이 필요한 필드에만 추가하면 됩니다
 > - 어노테이션이 없는 필드는 기본 동작을 사용합니다 (일반 컬럼)
 > - 다른 primary key가 지정되지 않은 경우 `id: int = None` 필드가 자동으로 자동 증가 primary key가 됩니다
+
+### 엔티티 관계
+
+Ezy API는 TypeORM 스타일의 엔티티 관계를 지원하며, OneToMany와 ManyToOne 관계를 정의할 수 있습니다. 엔티티 간의 관계를 정의하고 연관된 데이터를 효율적으로 로드할 수 있습니다.
+
+#### 관계 정의
+
+```python
+# user/entity/user_entity.py
+from ezyapi import EzyEntityBase, OneToMany, ManyToOne
+from typing import List, Optional
+
+class UserEntity(EzyEntityBase):
+    def __init__(self, name: str = "", email: str = ""):
+        self.name = name
+        self.email = email
+    
+    id: int = None
+    name: str = ""
+    email: str = ""
+    
+    # OneToMany 관계: 한 사용자가 여러 게시글을 가질 수 있음
+    posts: List['PostEntity'] = OneToMany('PostEntity', 'user_id')
+
+class PostEntity(EzyEntityBase):
+    def __init__(self, title: str = "", content: str = "", user_id: int = None):
+        self.title = title
+        self.content = content
+        self.user_id = user_id
+    
+    id: int = None
+    title: str = ""
+    content: str = ""
+    user_id: int = None
+    
+    # ManyToOne 관계: 여러 게시글이 한 사용자에게 속할 수 있음
+    user: UserEntity = ManyToOne(UserEntity, 'user_id')
+```
+
+#### 관계 타입
+
+| 관계 | 설명 | 예시 |
+|:---|:---|:---|
+| `OneToMany(target_entity, mapped_by)` | 하나의 엔티티가 여러 관련 엔티티를 가짐 | `posts: List['PostEntity'] = OneToMany('PostEntity', 'user_id')` |
+| `ManyToOne(target_entity, foreign_key)` | 여러 엔티티가 하나의 엔티티에 속함 | `user: UserEntity = ManyToOne(UserEntity, 'user_id')` |
+
+#### 관련 데이터 로드
+
+저장소 메서드에서 `relations` 파라미터를 사용하여 관련 엔티티를 로드할 수 있습니다:
+
+```python
+# user_service.py
+from ezyapi import EzyService
+from ezyapi.database import DatabaseConfig
+from user.entity.user_entity import UserEntity
+
+class UserService(EzyService):
+    def __init__(self):
+        db_config = DatabaseConfig.get_instance()
+        self.user_repository = db_config.get_repository(UserEntity)
+    
+    async def get_users_with_posts(self):
+        # 사용자와 함께 게시글 로드
+        users = await self.user_repository.find(relations=["posts"])
+        return users
+    
+    async def get_user_with_posts_by_id(self, user_id: int):
+        # 특정 사용자와 함께 게시글 로드
+        user = await self.user_repository.find_one(
+            where={"id": user_id}, 
+            relations=["posts"]
+        )
+        return user
+
+# post_service.py
+from post.entity.post_entity import PostEntity
+
+class PostService(EzyService):
+    def __init__(self):
+        db_config = DatabaseConfig.get_instance()
+        self.post_repository = db_config.get_repository(PostEntity)
+    
+    async def get_posts_with_users(self):
+        # 게시글과 연관된 사용자 로드
+        posts = await self.post_repository.find(relations=["user"])
+        return posts
+```
+
+#### 관계 로드 예시
+
+```python
+# 여러 관계 로드
+users = await user_repository.find(relations=["posts", "profile", "comments"])
+
+# 관계와 함께 특정 사용자 로드
+user = await user_repository.find_one(
+    where={"id": 1}, 
+    relations=["posts"]
+)
+
+# 로드된 사용자 객체에는 posts 속성이 채워져 있음
+print(user.posts)  # PostEntity 객체 목록
+```
 
 </br>
 </br>
