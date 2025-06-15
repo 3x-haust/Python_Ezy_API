@@ -15,7 +15,8 @@ from ezyapi.database.filters import (
     Not, LessThan, LessThanOrEqual, MoreThan, MoreThanOrEqual,
     Equal, Like, ILike, Between, In, IsNull
 )
+from ezyapi.database.relationships import OneToMany, ManyToOne
 from ezyapi.decorators.route import route
 from ezyapi.dto.base import EzyBaseDTO
 
-__version__ = "1.7.1"
+__version__ = "1.7.2"
