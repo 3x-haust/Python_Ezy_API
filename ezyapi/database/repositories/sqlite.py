@@ -5,7 +5,7 @@ SQLite 저장소 모듈
 """
 
 import sqlite3
-from typing import Dict, List, Optional, Any, Type, TypeVar
+from typing import Dict, List, Optional, Any, Type, TypeVar, get_type_hints
 
 from ezyapi.database.repositories.base import EzyRepository
 from ezyapi.database.filters import (
@@ -97,6 +97,165 @@ class SQLiteRepository(EzyRepository[T]):
         with self._get_conn() as conn:
             conn.execute(create_table_sql)
     
+    def _get_relation_metadata(self):
+        """
+        엔티티 클래스에서 관계 메타데이터를 추출합니다.
+        
+        Returns:
+            Dict[str, Any]: 관계 메타데이터
+        """
+        from ezyapi.database.decorators import OneToMany, ManyToOne
+        
+        relations = {}
+        type_hints = get_type_hints(self.entity_class)
+        
+        for attr_name, attr_value in self.entity_class.__dict__.items():
+            if isinstance(attr_value, (OneToMany, ManyToOne)):
+                relations[attr_name] = {
+                    'type': 'one_to_many' if isinstance(attr_value, OneToMany) else 'many_to_one',
+                    'target_entity': attr_value.target_entity,
+                    'foreign_key': attr_value.foreign_key,
+                    'metadata': attr_value
+                }
+                
+        return relations
+    
+    def _load_relations(self, entities: List[T], relations: List[str]) -> List[T]:
+        """
+        엔티티 목록에 대해 관계 데이터를 로드합니다.
+        
+        Args:
+            entities: 관계를 로드할 엔티티 목록
+            relations: 로드할 관계 이름 목록
+            
+        Returns:
+            List[T]: 관계가 로드된 엔티티 목록
+        """
+        if not entities or not relations:
+            return entities
+            
+        relation_metadata = self._get_relation_metadata()
+        
+        for relation_name in relations:
+            if relation_name not in relation_metadata:
+                continue
+                
+            rel_meta = relation_metadata[relation_name]
+            if rel_meta['type'] == 'many_to_one':
+                entities = self._load_many_to_one_relation(entities, relation_name, rel_meta)
+            elif rel_meta['type'] == 'one_to_many':
+                entities = self._load_one_to_many_relation(entities, relation_name, rel_meta)
+                
+        return entities
+    
+    def _load_many_to_one_relation(self, entities: List[T], relation_name: str, rel_meta: Dict[str, Any]) -> List[T]:
+        """
+        ManyToOne 관계 데이터를 로드합니다.
+        
+        Args:
+            entities: 엔티티 목록
+            relation_name: 관계 이름
+            rel_meta: 관계 메타데이터
+            
+        Returns:
+            List[T]: 관계가 로드된 엔티티 목록
+        """
+        target_entity = rel_meta['target_entity']
+        foreign_key = rel_meta['foreign_key']
+        
+        foreign_key_values = set()
+        for entity in entities:
+            fk_value = getattr(entity, foreign_key, None)
+            if fk_value is not None:
+                foreign_key_values.add(fk_value)
+        
+        if not foreign_key_values:
+            return entities
+            
+        from ezyapi.utils.inflection import get_table_name_from_entity
+        target_table = get_table_name_from_entity(target_entity)
+        target_pk_info = target_entity().get_primary_key_info()
+        target_pk_field = target_pk_info['field_name']
+        
+        placeholders = ', '.join('?' for _ in foreign_key_values)
+        query = f"SELECT * FROM {target_table} WHERE {target_pk_field} IN ({placeholders})"
+        
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute(query, list(foreign_key_values))
+            rows = cursor.fetchall()
+            
+            related_entities = {}
+            for row in rows:
+                related_entity = target_entity()
+                for key in row.keys():
+                    setattr(related_entity, key, row[key])
+                related_entities[getattr(related_entity, target_pk_field)] = related_entity
+        
+        for entity in entities:
+            fk_value = getattr(entity, foreign_key, None)
+            if fk_value in related_entities:
+                setattr(entity, relation_name, related_entities[fk_value])
+            else:
+                setattr(entity, relation_name, None)
+                
+        return entities
+    
+    def _load_one_to_many_relation(self, entities: List[T], relation_name: str, rel_meta: Dict[str, Any]) -> List[T]:
+        """
+        OneToMany 관계 데이터를 로드합니다.
+        
+        Args:
+            entities: 엔티티 목록
+            relation_name: 관계 이름
+            rel_meta: 관계 메타데이터
+            
+        Returns:
+            List[T]: 관계가 로드된 엔티티 목록
+        """
+        target_entity = rel_meta['target_entity']
+        foreign_key = rel_meta['foreign_key']
+        
+        entity_pk_info = self.entity_class().get_primary_key_info()
+        entity_pk_field = entity_pk_info['field_name']
+        
+        primary_key_values = set()
+        for entity in entities:
+            pk_value = getattr(entity, entity_pk_field, None)
+            if pk_value is not None:
+                primary_key_values.add(pk_value)
+        
+        if not primary_key_values:
+            return entities
+            
+        from ezyapi.utils.inflection import get_table_name_from_entity
+        target_table = get_table_name_from_entity(target_entity)
+        
+        placeholders = ', '.join('?' for _ in primary_key_values)
+        query = f"SELECT * FROM {target_table} WHERE {foreign_key} IN ({placeholders})"
+        
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute(query, list(primary_key_values))
+            rows = cursor.fetchall()
+            
+            related_entities_by_fk = {}
+            for row in rows:
+                related_entity = target_entity()
+                for key in row.keys():
+                    setattr(related_entity, key, row[key])
+                
+                fk_value = getattr(related_entity, foreign_key)
+                if fk_value not in related_entities_by_fk:
+                    related_entities_by_fk[fk_value] = []
+                related_entities_by_fk[fk_value].append(related_entity)
+        
+        for entity in entities:
+            pk_value = getattr(entity, entity_pk_field)
+            setattr(entity, relation_name, related_entities_by_fk.get(pk_value, []))
+                
+        return entities
+    
     def _build_where_clause(self, conditions: Dict[str, Any]) -> tuple[List[str], List[Any]]:
         """
         조건 딕셔너리에서 SQL WHERE 절을 구성합니다.
@@ -168,7 +327,7 @@ class SQLiteRepository(EzyRepository[T]):
     async def find(self, 
                   where: Optional[Dict[str, Any] | List[Dict[str, Any]]] = None, 
                   select: Optional[List[str]] = None, 
-                  relations: Optional[Dict[str, Any]] = None, 
+                  relations: Optional[List[str]] = None, 
                   order: Optional[Dict[str, str]] = None, 
                   skip: Optional[int] = None, 
                   take: Optional[int] = None) -> List[T]:
@@ -178,7 +337,7 @@ class SQLiteRepository(EzyRepository[T]):
         Args:
             where: 검색 조건
             select: 선택할 필드 목록
-            relations: 함께 로드할 관계 데이터 (SQLite에서는 구현되지 않음)
+            relations: 함께 로드할 관계 데이터
             order: 정렬 조건
             skip: 건너뛸 결과 수
             take: 가져올 결과 수
@@ -186,6 +345,11 @@ class SQLiteRepository(EzyRepository[T]):
         Returns:
             List[T]: 검색된 엔티티 목록
         """
+        if relations is not None and not isinstance(relations, list):
+            raise ValueError(
+                "relations 파라미터는 리스트 형태만 지원됩니다. "
+                "예: relations=['posts'] (올바름), relations={'posts': True} (잘못됨)"
+            )
         fields = ', '.join(select) if select else '*'
         query = f"SELECT {fields} FROM {self.table_name}"
         values = []
@@ -218,23 +382,33 @@ class SQLiteRepository(EzyRepository[T]):
             cursor = conn.cursor()
             cursor.execute(query, values)
             rows = cursor.fetchall()
-            return [self._row_to_entity(row) for row in rows]
+            entities = [self._row_to_entity(row) for row in rows]
+            
+            if relations:
+                entities = self._load_relations(entities, relations)
+                
+            return entities
     
     async def find_one(self, 
                       where: Optional[Dict[str, Any] | List[Dict[str, Any]]] = None, 
                       select: Optional[List[str]] = None, 
-                      relations: Optional[Dict[str, Any]] = None) -> Optional[T]:
+                      relations: Optional[List[str]] = None) -> Optional[T]:
         """
         조건에 맞는 단일 엔티티를 검색합니다.
         
         Args:
             where: 검색 조건
             select: 선택할 필드 목록
-            relations: 함께 로드할 관계 데이터 (SQLite에서는 구현되지 않음)
+            relations: 함께 로드할 관계 데이터
             
         Returns:
             Optional[T]: 검색된 엔티티 또는 None
         """
+        if relations is not None and not isinstance(relations, list):
+            raise ValueError(
+                "relations 파라미터는 리스트 형태만 지원됩니다. "
+                "예: relations=['posts'] (올바름), relations={'posts': True} (잘못됨)"
+            )
         fields = ', '.join(select) if select else '*'
         query = f"SELECT {fields} FROM {self.table_name}"
         values = []
@@ -258,7 +432,17 @@ class SQLiteRepository(EzyRepository[T]):
             cursor = conn.cursor()
             cursor.execute(query, values)
             row = cursor.fetchone()
-            return self._row_to_entity(row) if row else None
+            
+            if row is None:
+                return None
+                
+            entity = self._row_to_entity(row)
+            
+            if relations:
+                entities = self._load_relations([entity], relations)
+                return entities[0] if entities else entity
+                
+            return entity
     
     async def save(self, entity: T) -> T:
         """

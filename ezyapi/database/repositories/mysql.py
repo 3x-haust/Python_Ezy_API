@@ -6,7 +6,7 @@ MySQL 저장소 모듈
 
 import pymysql
 from urllib.parse import urlparse
-from typing import Dict, List, Optional, Any, Type, TypeVar
+from typing import Dict, List, Optional, Any, Type, TypeVar, get_type_hints
 
 from ezyapi.database.repositories.base import EzyRepository
 from ezyapi.database.filters import (
@@ -176,10 +176,172 @@ class MySQLRepository(EzyRepository[T]):
             setattr(entity, key, value)
         return entity
     
+    def _get_relation_metadata(self) -> Dict[str, Any]:
+        """
+        엔티티 클래스에서 관계 메타데이터를 추출합니다.
+        
+        Returns:
+            Dict[str, Any]: 관계 필드명을 키로 하는 관계 메타데이터 딕셔너리
+        """
+        relations = {}
+        
+        for attr_name in dir(self.entity_class):
+            if attr_name.startswith('_'):
+                continue
+            
+            attr_value = getattr(self.entity_class, attr_name, None)
+            if isinstance(attr_value, dict) and '_relation_type' in attr_value:
+                relations[attr_name] = attr_value
+        
+        try:
+            type_hints = get_type_hints(self.entity_class)
+            for field_name, field_type in type_hints.items():
+                if field_name.startswith('_'):
+                    continue
+                
+                if hasattr(field_type, '__origin__') and field_type.__origin__ is list:
+                    if hasattr(field_type, '__args__') and field_type.__args__:
+                        target_entity = field_type.__args__[0]
+                        if field_name not in relations:
+                            relations[field_name] = {
+                                '_relation_type': 'one_to_many',
+                                '_target_entity': target_entity,
+                                '_mapped_by': f"{self.table_name}_id"
+                            }
+        except Exception:
+            pass
+        
+        return relations
+    
+    async def _load_relations(self, entities: List[T], relations_config: List[str]) -> List[T]:
+        """
+        엔티티 목록에 관계 데이터를 로드합니다.
+        
+        Args:
+            entities: 관계를 로드할 엔티티 목록
+            relations_config: 로드할 관계 설정
+            
+        Returns:
+            List[T]: 관계 데이터가 로드된 엔티티 목록
+        """
+        if not entities or not relations_config:
+            return entities
+        
+        if not isinstance(relations_config, list):
+            raise ValueError("relations must be a list of relation names, e.g., ['card', 'posts']")
+        
+        relations_dict = {name: True for name in relations_config}
+        relation_metadata = self._get_relation_metadata()
+        
+        for relation_name, relation_options in relations_dict.items():
+            if relation_name not in relation_metadata:
+                continue
+            
+            relation_info = relation_metadata[relation_name]
+            relation_type = relation_info.get('_relation_type')
+            target_entity = relation_info.get('_target_entity')
+            
+            if not target_entity:
+                continue
+            
+            target_table = get_table_name_from_entity(target_entity)
+            
+            if relation_type == 'many_to_one':
+                foreign_key = relation_info.get('_foreign_key', f"{relation_name}_id")
+                await self._load_many_to_one_relation(entities, relation_name, target_entity, target_table, foreign_key)
+                
+            elif relation_type == 'one_to_many':
+                mapped_by = relation_info.get('_mapped_by', f"{self.table_name}_id")
+                await self._load_one_to_many_relation(entities, relation_name, target_entity, target_table, mapped_by)
+        
+        return entities
+    
+    async def _load_many_to_one_relation(self, entities: List[T], relation_name: str, 
+                                       target_entity: Type, target_table: str, foreign_key: str):
+        """
+        ManyToOne 관계 데이터를 로드합니다.
+        """
+        foreign_key_values = []
+        for entity in entities:
+            fk_value = getattr(entity, foreign_key, None)
+            if fk_value is not None:
+                foreign_key_values.append(fk_value)
+        
+        if not foreign_key_values:
+            return
+        
+        unique_fk_values = list(set(foreign_key_values))
+        
+        placeholders = ', '.join('%s' for _ in unique_fk_values)
+        query = f'SELECT * FROM {target_table} WHERE id IN ({placeholders})'
+        
+        conn = self._get_conn()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute(query, unique_fk_values)
+        related_rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        related_entities = {}
+        for row in related_rows:
+            related_entity = target_entity()
+            for key, value in row.items():
+                setattr(related_entity, key, value)
+            related_entities[row['id']] = related_entity
+        
+        for entity in entities:
+            fk_value = getattr(entity, foreign_key, None)
+            if fk_value in related_entities:
+                setattr(entity, relation_name, related_entities[fk_value])
+    
+    async def _load_one_to_many_relation(self, entities: List[T], relation_name: str,
+                                       target_entity: Type, target_table: str, mapped_by: str):
+        """
+        OneToMany 관계 데이터를 로드합니다.
+        """
+        parent_ids = []
+        for entity in entities:
+            parent_id = getattr(entity, 'id', None)
+            if parent_id is not None:
+                parent_ids.append(parent_id)
+        
+        if not parent_ids:
+            return
+        
+        unique_parent_ids = list(set(parent_ids))
+        
+        placeholders = ', '.join('%s' for _ in unique_parent_ids)
+        query = f'SELECT * FROM {target_table} WHERE {mapped_by} IN ({placeholders})'
+        
+        conn = self._get_conn()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute(query, unique_parent_ids)
+        related_rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        children_by_parent = {}
+        for row in related_rows:
+            related_entity = target_entity()
+            for key, value in row.items():
+                setattr(related_entity, key, value)
+            
+            parent_id = row[mapped_by]
+            if parent_id not in children_by_parent:
+                children_by_parent[parent_id] = []
+            children_by_parent[parent_id].append(related_entity)
+        
+        for entity in entities:
+            parent_id = getattr(entity, 'id', None)
+            if parent_id in children_by_parent:
+                setattr(entity, relation_name, children_by_parent[parent_id])
+            else:
+                setattr(entity, relation_name, [])
+    
     async def find(self, 
                   where: Optional[Dict[str, Any] | List[Dict[str, Any]]] = None, 
                   select: Optional[List[str]] = None, 
-                  relations: Optional[Dict[str, Any]] = None, 
+                  relations: Optional[List[str]] = None, 
                   order: Optional[Dict[str, str]] = None, 
                   skip: Optional[int] = None, 
                   take: Optional[int] = None) -> List[T]:
@@ -189,7 +351,7 @@ class MySQLRepository(EzyRepository[T]):
         Args:
             where: 검색 조건
             select: 선택할 필드 목록
-            relations: 함께 로드할 관계 데이터 (MySQL에서는 구현되지 않음)
+            relations: 함께 로드할 관계 데이터. 예: ["user", "posts"]
             order: 정렬 조건
             skip: 건너뛸 결과 수
             take: 가져올 결과 수
@@ -232,19 +394,24 @@ class MySQLRepository(EzyRepository[T]):
         cursor.close()
         conn.close()
         
-        return [self._row_to_entity(row) for row in rows]
+        entities = [self._row_to_entity(row) for row in rows]
+        
+        if relations:
+            entities = await self._load_relations(entities, relations)
+        
+        return entities
     
     async def find_one(self, 
                       where: Optional[Dict[str, Any] | List[Dict[str, Any]]] = None, 
                       select: Optional[List[str]] = None, 
-                      relations: Optional[Dict[str, Any]] = None) -> Optional[T]:
+                      relations: Optional[List[str]] = None) -> Optional[T]:
         """
         조건에 맞는 단일 엔티티를 검색합니다.
         
         Args:
             where: 검색 조건
             select: 선택할 필드 목록
-            relations: 함께 로드할 관계 데이터 (MySQL에서는 구현되지 않음)
+            relations: 함께 로드할 관계 데이터. 예: {"user": True, "posts": {"select": ["title", "content"]}}
             
         Returns:
             Optional[T]: 검색된 엔티티 또는 None
@@ -275,7 +442,16 @@ class MySQLRepository(EzyRepository[T]):
         cursor.close()
         conn.close()
         
-        return self._row_to_entity(row) if row else None
+        if not row:
+            return None
+        
+        entity = self._row_to_entity(row)
+        
+        if relations:
+            entities = await self._load_relations([entity], relations)
+            return entities[0] if entities else entity
+        
+        return entity
     
     async def save(self, entity: T) -> T:
         """

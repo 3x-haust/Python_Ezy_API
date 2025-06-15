@@ -44,6 +44,11 @@ This README is the English version.
       - [Column Annotation Types](#column-annotation-types)
       - [Column Options](#column-options)
       - [Multiple Primary Key Examples](#multiple-primary-key-examples)
+    - [Entity Relationships](#entity-relationships)
+      - [Defining Relationships](#defining-relationships)
+      - [Relationship Types](#relationship-types)
+      - [Loading Related Data](#loading-related-data)
+      - [Relationship Loading Examples](#relationship-loading-examples)
 - [CLI Overview](#cli-overview)
     - [Installation](#installation)
     - [Commands](#commands)
@@ -372,8 +377,7 @@ You can manually specify the URL and method by using the `@route()` decorator di
 
 ```python
 # user_service.py
-from ezyapi import EzyService
-from ezyapi.core import route
+from ezyapi import EzyService, route
 
 class UserService(EzyService):
     @route('get', '/name/{name}', description="Get user by name")
@@ -532,6 +536,109 @@ class SessionEntity(EzyEntityBase):
 > - Annotations are **optional** - you only need to add them for fields requiring special database configuration
 > - Fields without annotations use default behavior (regular columns)
 > - The `id: int = None` field automatically becomes an auto-increment primary key if no other primary key is specified
+
+### Entity Relationships
+
+Ezy API supports TypeORM-style entity relationships including OneToMany and ManyToOne. You can define relationships between entities and load related data efficiently.
+
+#### Defining Relationships
+
+```python
+# user/entity/user_entity.py
+from ezyapi import EzyEntityBase, OneToMany, ManyToOne
+from typing import List, Optional
+
+class UserEntity(EzyEntityBase):
+    def __init__(self, name: str = "", email: str = ""):
+        self.name = name
+        self.email = email
+    
+    id: int = None
+    name: str = ""
+    email: str = ""
+    
+    # OneToMany relationship: A user can have multiple posts
+    posts: List['PostEntity'] = OneToMany('PostEntity', 'user_id')
+
+class PostEntity(EzyEntityBase):
+    def __init__(self, title: str = "", content: str = "", user_id: int = None):
+        self.title = title
+        self.content = content
+        self.user_id = user_id
+    
+    id: int = None
+    title: str = ""
+    content: str = ""
+    user_id: int = None
+    
+    # ManyToOne relationship: Multiple posts can belong to one user
+    user: UserEntity = ManyToOne(UserEntity, 'user_id')
+```
+
+#### Relationship Types
+
+| Relationship | Description | Example |
+|:---|:---|:---|
+| `OneToMany(target_entity, mapped_by)` | One entity has many related entities | `posts: List['PostEntity'] = OneToMany('PostEntity', 'user_id')` |
+| `ManyToOne(target_entity, foreign_key)` | Many entities belong to one entity | `user: UserEntity = ManyToOne(UserEntity, 'user_id')` |
+
+#### Loading Related Data
+
+Use the `relations` parameter in repository methods to load related entities:
+
+```python
+# user_service.py
+from ezyapi import EzyService
+from ezyapi.database import DatabaseConfig
+from user.entity.user_entity import UserEntity
+
+class UserService(EzyService):
+    def __init__(self):
+        db_config = DatabaseConfig.get_instance()
+        self.user_repository = db_config.get_repository(UserEntity)
+    
+    async def get_users_with_posts(self):
+        # Load users with their posts
+        users = await self.user_repository.find(relations=["posts"])
+        return users
+    
+    async def get_user_with_posts_by_id(self, user_id: int):
+        # Load a specific user with their posts
+        user = await self.user_repository.find_one(
+            where={"id": user_id}, 
+            relations=["posts"]
+        )
+        return user
+
+# post_service.py
+from post.entity.post_entity import PostEntity
+
+class PostService(EzyService):
+    def __init__(self):
+        db_config = DatabaseConfig.get_instance()
+        self.post_repository = db_config.get_repository(PostEntity)
+    
+    async def get_posts_with_users(self):
+        # Load posts with their associated users
+        posts = await self.post_repository.find(relations=["user"])
+        return posts
+```
+
+#### Relationship Loading Examples
+
+```python
+# Load multiple relationships
+users = await user_repository.find(relations=["posts", "profile", "comments"])
+
+# Load specific user with relationships
+user = await user_repository.find_one(
+    where={"id": 1}, 
+    relations=["posts"]
+)
+
+# The loaded user object will have the posts attribute populated
+print(user.posts)  # List of PostEntity objects
+```
 
 </br>
 </br>
