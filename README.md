@@ -1,5 +1,5 @@
 This README is the English version.  
-[Click here for the Korean version.](./README.ko.md)
+[한국어 버전은 여기를 클릭하세요.](./README_KR.md)
 
 ![Contributors](https://img.shields.io/github/contributors/3x-haust/Python_Ezy_API?style=flat)
 ![Forks](https://img.shields.io/github/forks/3x-haust/Python_Ezy_API?style=social?style=flat)
@@ -19,7 +19,7 @@ This README is the English version.
     - [Commit Message Convention](#commit-message-convention)
     - [Commit Examples](#commit-examples)
   - [Push to Remote Repository](#push-to-remote-repository)
-  - [Submit a Pull Request (PR)](#submit-a-pull-request-pr)
+  - [Create Pull Request (PR)](#create-pull-request-pr)
   - [Merge](#merge)
 - [First Steps](#first-steps)
     - [Background](#background)
@@ -39,28 +39,28 @@ This README is the English version.
 - [Database and Entities](#database-and-entities)
     - [Database Configuration](#database-configuration)
     - [Entity Definition](#entity-definition)
-      - [Basic Entity (Simple Approach)](#basic-entity-simple-approach)
+      - [Basic Entity (Simple Method)](#basic-entity-simple-method)
       - [Advanced Entity with Annotations](#advanced-entity-with-annotations)
       - [Column Annotation Types](#column-annotation-types)
       - [Column Options](#column-options)
-      - [Multiple Primary Key Examples](#multiple-primary-key-examples)
-    - [Entity Relationships](#entity-relationships)
-      - [Defining Relationships](#defining-relationships)
-      - [Relationship Types](#relationship-types)
+      - [Various Primary Key Examples](#various-primary-key-examples)
+    - [Entity Relations](#entity-relations)
+      - [Relation Definition](#relation-definition)
+      - [Relation Types](#relation-types)
       - [Loading Related Data](#loading-related-data)
-      - [Relationship Loading Examples](#relationship-loading-examples)
+      - [Relation Loading Examples](#relation-loading-examples)
 - [CLI Overview](#cli-overview)
     - [Installation](#installation)
     - [Commands](#commands)
     - [Examples](#examples)
-      - [Create a New Project](#create-a-new-project)
-      - [Generate a Resource](#generate-a-resource)
+      - [Create New Project](#create-new-project)
+      - [Generate Resource](#generate-resource)
       - [Install Dependencies](#install-dependencies)
       - [Run Scripts](#run-scripts)
       - [Run Tests](#run-tests)
-      - [Lint Code](#lint-code)
-      - [View Information](#view-information)
-      - [Initialize a Project](#initialize-a-project)
+      - [Code Linting](#code-linting)
+      - [Check Information](#check-information)
+      - [Initialize Project](#initialize-project)
     - [Project Structure](#project-structure)
 
 </br>
@@ -70,22 +70,22 @@ This README is the English version.
 # How to Contribute
 
 Anyone can freely contribute to Ezy API!  
-Please follow the procedure below to participate comfortably.
+Please follow the procedures below to participate comfortably.
 
 ## Fork the Project
 
-Fork the project to work in your personal repository and then submit a PR.
+Please fork the project to work in your personal repository and then create a PR.
 
 ## Create a Branch
 
-When starting new work, please create a **branch**. Branches are typically written in the form of `feature/{feature-name}`.
+When starting new work, please create a **branch**. Branches are usually written in the format `feature/{feature-name}`.
 
 ```bash
-# Move to the main branch and sync with the latest state
+# Move to main branch and sync to latest state
 $ git checkout main
 $ git pull origin main
 
-# Create and move to a new branch
+# Create and switch to new branch
 $ git checkout -b feature/feature-name
 ```
 
@@ -99,55 +99,54 @@ Please write branch names according to the nature of your work.
 | `fix/` | Bug fixes | `fix/login-bug`, `fix/routing-error` |
 | `docs/` | Documentation work (README, comments, etc.) | `docs/update-readme`, `docs/api-docs` |
 | `refactor/` | Code refactoring | `refactor/login-service`, `refactor/db-helper` |
-| `test/` | Add or modify test code | `test/user-service-test` |
-| `chore/` | Build settings, package management, other miscellaneous tasks | `chore/update-deps`, `chore/ci-config` |
+| `test/` | Adding and modifying test code | `test/user-service-test` |
+| `chore/` | Build configuration, package management, other maintenance | `chore/update-deps`, `chore/ci-config` |
 
 > **Tip**
 > 
-> Branch names should clearly reflect the content of your work.
-
+> It's good to have branch names clearly indicate the work content.
 
 ## Work and Commit
 
-After completing your work, please write commit messages according to the **commit conventions** below.
+After completing your work, write commit messages referring to the **commit convention** below.
 
 ### Commit Message Convention
 
 | Tag | Description |
 |:---:|:---|
-| `feat` | Add new features |
-| `fix` | Fix bugs |
-| `docs` | Modify documentation (README, comments, etc.) |
-| `style` | Code formatting, spelling fixes, etc. that don't affect the code functionality |
-| `refactor` | Code refactoring (improving internal logic without changing behavior) |
-| `test` | Add or modify test code |
+| `feat` | Add new feature |
+| `fix` | Bug fix |
+| `docs` | Documentation modification (README, comments, etc.) |
+| `style` | Code formatting, spelling corrections, etc. - changes that don't affect code behavior |
+| `refactor` | Code refactoring (improving internal logic without behavioral changes) |
+| `test` | Adding and modifying test code |
 | `chore` | Build tasks, package manager configuration, maintenance work, etc. |
 
 ### Commit Examples
 ```bash
-$ git commit -m "feat: Add user API"
-$ git commit -m "fix: Fix incorrect router path"
-$ git commit -m "docs: Add installation method to README"
+$ git commit -m "feat: add user API"
+$ git commit -m "fix: correct wrong router path"
+$ git commit -m "docs: add installation instructions to README"
 ```
 
 ## Push to Remote Repository
 
-Push your branch to the remote repository.
+Push your created branch to the remote repository.
 
 ```bash
 $ git push origin feature/feature-name
 ```
 
-## Submit a Pull Request (PR)
+## Create Pull Request (PR)
 
 - Create a **Pull Request** on GitHub.
-- Briefly explain what work you did in the PR description.
-- Proceed with code review with team members.
+- Write a brief description of what work you've done in the PR description.
+- Then proceed with code review with team members.
 
 ## Merge
 
-- After review and approval, **merge to the main branch**.
-- After merging, always sync your `main` branch to the latest before starting other work.
+- After review is complete and approval is received, **merge to main branch**.
+- After merging, always sync the `main` branch to the latest before other work.
 
 ```bash
 $ git checkout main
@@ -162,18 +161,17 @@ $ git pull origin main
 
 ### Background
 
-We like [Nest.js](https://nestjs.com/), but we thought that Nest.js's Controller, Module, etc. were unnecessary for simple tasks.
+We love [Nest.js](https://nestjs.com/), but we thought that [Nest.js](https://nestjs.com/)'s Controllers, Modules, etc. are unnecessary for simple tasks.
 
 ### Getting Started
 
-In this document, we'll explore the **core principles** of Ezy API. To understand the essential components of an Ezy API application,
-you need to build a basic CRUD application covering many areas at a fundamental level.
+This document covers the **core principles** of Ezy API. To familiarize yourself with the essential components of an Ezy API application, you need to cover many areas at a basic level and build a basic CRUD application.
 
 #### Language
 
 Ezy API uses the [Python](https://www.python.org/) language.
 
-In the future, we plan to support other languages such as [TypeScript](https://www.typescriptlang.org/) and [Java](https://java.com/).
+In the future, we plan to support usage in languages like [TypeScript](https://www.typescriptlang.org/), [Java](https://java.com/), etc.
 
 #### Prerequisites
 
@@ -181,15 +179,14 @@ Make sure [Python](https://www.python.org/) (>= 3.11) is installed on your opera
 
 #### Setup
 
-Setting up a new project with [Ezy API CLI](#cli-overview) is very simple. If you have [pip](https://pypi.org/project/pip/) installed, you can create a new Ezy API project using the following command in your OS terminal:
-
+Setting up a new project with [Ezy API CLI](#cli-overview) is very simple. If you have [pip](https://pypi.org/project/pip/) installed, you can create a new Ezy API project using the following commands in your OS terminal.
 
 ```bash
 $ pip install ezyapi
 $ ezy new project-name
 ```
 
-A `project-name` directory will be created, along with main.py and CLI configuration files.
+The `project-name` directory is created, and main.py and cli configuration files are generated.
 
 The basic structure of the project is as follows:
 ```
@@ -203,19 +200,19 @@ main.py
 
 <br></br>
 
-The core files described above can be briefly explained as follows:
+A brief explanation of the core files above:
 
-|Filename|Description|
+|File Name|Description|
 |:---:|:---|
 |`app_service.py`|Basic service file|
 |`ezy.json`|CLI command configuration file|
-|`main.py`|Entry file. Uses the core function `EzyAPI` to create an Ezy API application instance.|
+|`main.py`|Entry file. Creates an Ezy API application instance using the core function `EzyAPI`.|
 
-> If you don't understand the services described above, that's okay. More detailed explanations will come in later chapters!
+> Don't worry if you don't understand the services mentioned above. Detailed explanations will come in later chapters!
 
 <br><br/>
 
-Let's start by creating a simple main.py file. This file contains the main module that starts the application.
+Let's start by creating the main.py file. This file contains the main module that starts the application.
 
 ```python
 # main.py
@@ -224,14 +221,19 @@ from ezyapi.database import DatabaseConfig
 from user.user_service import UserService
 from app_service import AppService
 
+app = EzyAPI()
+
 if __name__ == "__main__":
-    app = EzyAPI()
     app.run(port=8000)
 ```
 
+> **Tip**
+>>
+> During development, you can use the `reload=True` option to automatically restart the server when code changes.
+
 ### Running the Application
 
-You can run the application using the following command in your OS terminal:
+You can run the application with the following command in your OS terminal:
 ```bash
 $ ezy run start
 ```
@@ -245,15 +247,15 @@ $ ezy run start
 ### What is a Service?
 
 In Ezy API, a **Service** is a core component that handles requests and performs business logic.  
-It plays a similar role to Controllers or Services in [Nest.js](https://nestjs.com), but Ezy API is designed to allow you to configure APIs with just services in a more concise and intuitive way.
+It serves a similar role to Controllers or Services in [Nest.js](https://nestjs.com), but Ezy API is designed so that services alone can sufficiently compose APIs in a more concise and intuitive way.
 
 ### Service Structure
 
-A service is created by inheriting from the `EzyService` class.  
+Services are created by inheriting from the `EzyService` class.  
 Below is an example of a basic service:
 > **Tip**
 >
-> You can create a service using ```$ ezy g res user```
+> Services can be generated using ```$ ezy g res user```
 
 ```python
 # app_service.py
@@ -265,14 +267,14 @@ class AppService(EzyService):
 ```
 
 - By inheriting from `EzyService`, you can define API endpoints as asynchronous functions within the service.
-- The function name becomes the API endpoint URL.
+- Function names become the API endpoint URLs.
   - For example, a function called `get_user` is automatically mapped to the `/user/` path with the `GET` method.
-    - As an exception, if the service name is `app`, it's mapped to the root path.
-- Functions can be defined with `async` to enable asynchronous processing.
+    - However, as an exception, when the service name is `app`, it maps to the root path.
+- Functions are defined as `async` to enable asynchronous processing.
 
 ### URL Mapping Rules
 
-The function names of the service are automatically mapped to URL endpoints.
+Service function names are automatically mapped to URL endpoints.
 
 | Function Name | HTTP Method | URL |
 |:---:|:---:|:---|
@@ -284,13 +286,13 @@ The function names of the service are automatically mapped to URL endpoints.
 |`edit_user`|PATCH|`/user/`|
 
 > **Tip**
-> 
-> The `get`, `update`, `delete`, `edit` methods can use `by_id` etc. to `use path parameters`
+>
+> Methods like `get`, `update`, `delete`, `edit` can use path parameters with `by_id`, etc.  
 > Example: `get_user_by_id` ➡️ `GET /user/{id}`
 
 ### Service Registration
 
-Services can be registered to the EzyAPI instance in `main.py`.
+Services can be registered with the EzyAPI instance in `main.py`.
 
 ```python
 # main.py
@@ -298,14 +300,16 @@ from ezyapi import EzyAPI
 from ezyapi.database import DatabaseConfig
 from app_service import AppService
 
+app = EzyAPI()
+app.add_service(AppService)
+
 if __name__ == "__main__":
-    app.add_service(AppService)
     app.run(port=8000)
 ```
 
 ### Path Parameter Example
 
-Ezy API automatically maps parameters to URL paths when you add `by_id`, `by_name`, etc. to the function name.
+Ezy API automatically maps parameters to URL paths when you add `by_id`, `by_name`, etc. to function names.
 
 ```python
 # user_service.py
@@ -316,15 +320,17 @@ class UserService(EzyService):
         return {"id": id, "name": "John Doe"}
 ```
 
-- `get_user_by_id` ➡️ Automatically mapped to the `GET /user/{id}` path.
+- `get_user_by_id` ➡️ Automatically mapped to `GET /user/{id}` path.
 - `id` is used as a `path parameter` in the URL path.
 
 **Request Example**
+
 ```http
 GET /user/10
 ```
 
 **Response Example**
+
 ```json
 {
   "id": 10,
@@ -353,14 +359,16 @@ class UserService(EzyService):
 ```
 
 - `list_users` ➡️ `GET /user/`
-- You can pass `name` and `age` as query strings.
+- You can pass `name`, `age` as query strings.
 
 **Request Example**
+
 ```http
 GET /user/?name=Alice&age=30
 ```
 
 **Response Example**
+
 ```json
 [
   {
@@ -373,7 +381,7 @@ GET /user/?name=Alice&age=30
 
 ### Decorator Example (@route)
 
-You can manually specify the URL and method by using the `@route()` decorator directly on service functions.
+You can manually specify URLs and methods by using the `@route()` decorator directly on service functions.
 
 ```python
 # user_service.py
@@ -385,15 +393,17 @@ class UserService(EzyService):
         return {"name": name, "email": "example@example.com"}
 ```
 
-- `@route('get', '/name/{name}')` ➡️ Sets the path to `GET /name/{name}`.
+- `@route('get', '/name/{name}')` ➡️ Set to `GET /name/{name}` path.
 - `description` is used for API documentation.
 
 **Request Example**
+
 ```http
 GET /name/Alice
 ```
 
 **Response Example**
+
 ```json
 {
   "name": "Alice",
@@ -401,9 +411,9 @@ GET /name/Alice
 }
 ```
 
-> **Tip**  
-> 
-> Using the `@route()` decorator allows you to override automatic mapping and freely set the desired URL and HTTP method.
+> **Tip**
+>
+> Using the `@route()` decorator allows you to override automatic mapping and freely set desired URLs and HTTP methods.
 
 </br>
 </br>
@@ -413,7 +423,7 @@ GET /name/Alice
 
 ### Database Configuration
 
-Ezy API supports multiple database types including SQLite, MySQL, PostgreSQL, and MongoDB.
+Ezy API supports various database types including SQLite, MySQL, PostgreSQL, MongoDB, etc.
 
 ```python
 # main.py
@@ -426,165 +436,158 @@ if __name__ == "__main__":
     
     # SQLite configuration
     db_config = DatabaseConfig(
-        type="sqlite",
-        path="./app.db"
+        db_type="sqlite",
+        connection_params={
+            "dbname": "./app.db"
+        }
     )
     
     # Or MySQL configuration
     # db_config = DatabaseConfig(
-    #     type="mysql",
-    #     host="localhost",
-    #     port=3306,
-    #     username="root",
-    #     password="password",
-    #     database="myapp"
+    #     db_type="mysql",
+    #     connection_params={
+    #         "host": "localhost",
+    #         "port": 3306,
+    #         "user": "root",
+    #         "password": "password",
+    #         "dbname": "myapp"
+    #     }
     # )
     
-    app.add_database(db_config)
+    app.configure_database(db_config)
     app.add_service(UserService)
     app.run(port=8000)
 ```
 
 ### Entity Definition
 
-Entities are defined by inheriting from `EzyEntityBase`. You can use TypeORM-style annotations for advanced column configuration.
+Entities are defined by inheriting from `EzyEntityBase`. TypeORM-style annotations can be used for advanced column configuration.
 
-#### Basic Entity (Simple Approach)
+#### Basic Entity (Simple Method)
 
 ```python
 # user/entity/user_entity.py
 from ezyapi import EzyEntityBase
 
 class UserEntity(EzyEntityBase):
-    def __init__(self, name: str = "", email: str = ""):
+    def __init__(self, id: int = None, name: str = "", email: str = ""):
+        self.id = id
         self.name = name
         self.email = email
-    
-    # Default: id becomes auto-increment primary key
-    id: int = None
-    name: str = ""
-    email: str = ""
+
+# This way, id automatically becomes PrimaryGeneratedColumn
 ```
 
 #### Advanced Entity with Annotations
 
-For more control over database columns, you can use TypeORM-style annotations:
+Annotations can be used for more granular control over database columns:
 
 ```python
 # user/entity/user_entity.py
-from ezyapi import EzyEntityBase, PrimaryColumn, PrimaryGeneratedColumn, Column
-from typing import Annotated, Optional
+from typing import Annotated
+from ezyapi import EzyEntityBase, PrimaryGeneratedColumn, Column
 
 class UserEntity(EzyEntityBase):
-    def __init__(self, id: int = 0, name: str = "", major: Optional[str] = None, 
-                 grade: Optional[int] = None, isTeacher: bool = None):
-        self.id = id
-        self.name = name
-        self.major = major
-        self.grade = grade
-        self.isTeacher = isTeacher
+    def __init__(self, email: str = ""):
+        self.email = email
     
-    # Custom primary key with specific column type
-    id: Annotated[int, PrimaryColumn(column_type="INT")] = 0
+    # Use annotation to explicitly specify PrimaryGeneratedColumn
+    id: Annotated[int, PrimaryGeneratedColumn()] = None
     
-    # Optional: Add annotations only for fields that need special configuration
+    # Add annotations only to fields that need special configuration
     name: Annotated[str, Column(nullable=False, column_type="VARCHAR(100)")] = ""
-    major: Optional[str] = None
-    grade: Optional[int] = None
-    isTeacher: bool = None
 ```
 
 #### Column Annotation Types
 
 | Annotation | Description | Example |
 |:---|:---|:---|
-| `PrimaryColumn()` | Custom primary key (user-provided value) | `id: Annotated[str, PrimaryColumn(column_type="VARCHAR(50)")] = None` |
+| `PrimaryColumn()` | Custom primary key (user-specified value) | `id: Annotated[str, PrimaryColumn(column_type="VARCHAR(50)")] = None` |
 | `PrimaryGeneratedColumn()` | Auto-increment primary key | `id: Annotated[int, PrimaryGeneratedColumn(column_type="BIGINT")] = None` |
 | `Column()` | Regular column with options | `name: Annotated[str, Column(nullable=False, unique=True)] = ""` |
 
 #### Column Options
 
 - `column_type`: Specify database column type (e.g., "VARCHAR(100)", "TEXT", "BIGINT")
-- `nullable`: Whether the column can be NULL (default: True)
-- `unique`: Whether the column should have a unique constraint (default: False)
-- `auto_increment`: Whether the column should auto-increment (default: False for Column, True for PrimaryGeneratedColumn)
+- `nullable`: Whether the column allows NULL (default: True)
+- `unique`: Whether to apply unique constraint to the column (default: False)
+- `auto_increment`: Whether the column auto-increments (Column default: False, PrimaryGeneratedColumn: True)
 
-#### Multiple Primary Key Examples
+#### Various Primary Key Examples
 
 ```python
+# Basic auto-increment primary key (explicit annotation)
+class TodoEntity(EzyEntityBase):
+    def __init__(self, content: str = "", completed: bool = False):
+        self.content = content
+        self.completed = completed
+
+    id: Annotated[int, PrimaryGeneratedColumn()] = None
+
 # String primary key
 class ProductEntity(EzyEntityBase):
+    def __init__(self, name: str = "", price: float = 0.0):
+        self.name = name
+        self.price = price
+        
     product_code: Annotated[str, PrimaryColumn(column_type="VARCHAR(20)")] = None
-    name: str = ""
-    price: float = 0.0
 
 # Custom auto-increment primary key
 class OrderEntity(EzyEntityBase):
+    def __init__(self, user_id: int = 0, total_amount: float = 0.0):
+        self.user_id = user_id
+        self.total_amount = total_amount
+        
     order_id: Annotated[int, PrimaryGeneratedColumn(column_type="BIGINT")] = None
-    user_id: int = None
-    total_amount: float = 0.0
-
-# UUID primary key
-class SessionEntity(EzyEntityBase):
-    session_token: Annotated[str, PrimaryColumn(column_type="VARCHAR(36)")] = None
-    user_id: int = None
-    expires_at: str = None
 ```
 
 > **Note**
-> 
-> - Annotations are **optional** - you only need to add them for fields requiring special database configuration
+>
+> - Annotations are **optional** - only add them to fields that need special database configuration
 > - Fields without annotations use default behavior (regular columns)
-> - The `id: int = None` field automatically becomes an auto-increment primary key if no other primary key is specified
+> - If there's an `id` parameter in the `__init__` method, it automatically becomes an auto-increment primary key
 
-### Entity Relationships
+### Entity Relations
 
-Ezy API supports TypeORM-style entity relationships including OneToMany and ManyToOne. You can define relationships between entities and load related data efficiently.
+Ezy API supports TypeORM-style entity relations and can define OneToMany and ManyToOne relationships. You can define relationships between entities and efficiently load related data.
 
-#### Defining Relationships
+#### Relation Definition
 
 ```python
 # user/entity/user_entity.py
+from typing import List
 from ezyapi import EzyEntityBase, OneToMany, ManyToOne
-from typing import List, Optional
 
 class UserEntity(EzyEntityBase):
-    def __init__(self, name: str = "", email: str = ""):
+    def __init__(self, id: int = None, name: str = "", email: str = ""):
+        self.id = id
         self.name = name
         self.email = email
     
-    id: int = None
-    name: str = ""
-    email: str = ""
-    
-    # OneToMany relationship: A user can have multiple posts
+    # OneToMany relation: One user can have multiple posts
     posts: List['PostEntity'] = OneToMany('PostEntity', 'user_id')
 
 class PostEntity(EzyEntityBase):
-    def __init__(self, title: str = "", content: str = "", user_id: int = None):
+    def __init__(self, id: int = None, title: str = "", content: str = "", user_id: int = None):
+        self.id = id
         self.title = title
         self.content = content
         self.user_id = user_id
     
-    id: int = None
-    title: str = ""
-    content: str = ""
-    user_id: int = None
-    
-    # ManyToOne relationship: Multiple posts can belong to one user
-    user: UserEntity = ManyToOne(UserEntity, 'user_id')
+    # ManyToOne relation: Multiple posts can belong to one user
+    user: 'UserEntity' = ManyToOne('UserEntity', 'user_id')
 ```
 
-#### Relationship Types
+#### Relation Types
 
-| Relationship | Description | Example |
+| Relation | Description | Example |
 |:---|:---|:---|
-| `OneToMany(target_entity, mapped_by)` | One entity has many related entities | `posts: List['PostEntity'] = OneToMany('PostEntity', 'user_id')` |
-| `ManyToOne(target_entity, foreign_key)` | Many entities belong to one entity | `user: UserEntity = ManyToOne(UserEntity, 'user_id')` |
+| `OneToMany(target_entity, mapped_by)` | One entity has multiple related entities | `posts: List['PostEntity'] = OneToMany('PostEntity', 'user_id')` |
+| `ManyToOne(target_entity, foreign_key)` | Multiple entities belong to one entity | `user: UserEntity = ManyToOne(UserEntity, 'user_id')` |
 
 #### Loading Related Data
 
-Use the `relations` parameter in repository methods to load related entities:
+You can use the `relations` parameter in repository methods to load related entities:
 
 ```python
 # user_service.py
@@ -603,7 +606,7 @@ class UserService(EzyService):
         return users
     
     async def get_user_with_posts_by_id(self, user_id: int):
-        # Load a specific user with their posts
+        # Load specific user with their posts
         user = await self.user_repository.find_one(
             where={"id": user_id}, 
             relations=["posts"]
@@ -619,24 +622,24 @@ class PostService(EzyService):
         self.post_repository = db_config.get_repository(PostEntity)
     
     async def get_posts_with_users(self):
-        # Load posts with their associated users
+        # Load posts with associated users
         posts = await self.post_repository.find(relations=["user"])
         return posts
 ```
 
-#### Relationship Loading Examples
+#### Relation Loading Examples
 
 ```python
-# Load multiple relationships
+# Load multiple relations
 users = await user_repository.find(relations=["posts", "profile", "comments"])
 
-# Load specific user with relationships
+# Load specific user with relations
 user = await user_repository.find_one(
     where={"id": 1}, 
     relations=["posts"]
 )
 
-# The loaded user object will have the posts attribute populated
+# The loaded user object has the posts attribute populated
 print(user.posts)  # List of PostEntity objects
 ```
 
@@ -646,7 +649,7 @@ print(user.posts)  # List of PostEntity objects
 
 # CLI Overview
 
-Ezy CLI is a command-line interface tool designed to simplify Ezy API project management. It provides various commands to easily perform project creation, building, testing, and execution.
+Ezy CLI is a command-line interface tool designed to simplify Ezy API project management. It provides various commands to easily perform project creation, building, testing, running, and more.
 
 ### Installation
 
@@ -658,7 +661,7 @@ $ pip install ezyapi
 
 > **Note**
 >
-> Make sure Python 3.11 or higher is installed on your system.
+> Make sure you have Python 3.11 or higher installed on your system.
 
 ### Commands
 
@@ -667,9 +670,9 @@ Ezy CLI supports the following commands:
 | Command | Description |
 |:---|:---|
 |`new <project_name>`|Creates a new Ezy API project with the specified name.|
-|`generate <type> <name>` or `g <type> <name>`|Generates a component of the specified type (e.g., 'res' for resource) and name.|
+|`generate <type> <name>` or `g <type> <name>`|Generates a component with the specified type (e.g., 'res' for resource) and name.|
 |`install [packages...]` or `install -r <requirements.txt>`|Installs dependencies in the ezy_modules directory. You can specify packages directly or use a requirements.txt file.|
-|`run <script>`|Runs scripts defined in ezy.json (e.g., 'dev' or 'start').|
+|`run <script>`|Runs a script defined in ezy.json (e.g., 'dev' or 'start').|
 |`test`|Runs tests in the 'test' directory using pytest.|
 |`lint`|Checks code style using flake8.|
 |`info`|Displays CLI version, Python version, platform, and current directory information.|
@@ -677,7 +680,7 @@ Ezy CLI supports the following commands:
 
 ### Examples
 
-#### Create a New Project
+#### Create New Project
 
 ```bash
 $ ezy new my_project
@@ -685,13 +688,13 @@ $ ezy new my_project
 
 Creates the basic structure of an Ezy API project in a directory named `my_project`.
 
-#### Generate a Resource
+#### Generate Resource
 
 ```bash
 $ ezy generate res user
 ```
 
-Creates a resource named "user", optionally including CRUD operations.
+Generates a resource named "user", optionally including CRUD operations.
 
 #### Install Dependencies
 
@@ -715,7 +718,7 @@ $ ezy install -r requirements.txt
 
 #### Run Scripts
 
-Assuming scripts are defined in ezy.json, for example:
+Assuming you have scripts defined in ezy.json, for example:
 
 ```json
 {
@@ -726,7 +729,7 @@ Assuming scripts are defined in ezy.json, for example:
 }
 ```
 
-You can execute them as follows:
+You can run them like this:
 
 ```bash
 $ ezy run start
@@ -741,10 +744,10 @@ $ ezy test
 ```
 
 > **Note**
-> 
+>
 > pytest must be installed.
 
-#### Lint Code
+#### Code Linting
 
 To check for code style issues:
 
@@ -753,10 +756,10 @@ $ ezy lint
 ```
 
 > **Note**
-> 
+>
 > flake8 must be installed.
 
-#### View Information
+#### Check Information
 
 To display CLI and system information:
 
@@ -764,7 +767,7 @@ To display CLI and system information:
 $ ezy info
 ```
 
-#### Initialize a Project
+#### Initialize Project
 
 To initialize a new Ezy project in the current directory:
 
@@ -776,7 +779,7 @@ $ ezy init
 
 When you create a new project with the `ezy new <project_name>` command, the following structure is created:
 
-```
+```text
 project_name/
 ├── ezy.json
 ├── main.py
@@ -788,16 +791,16 @@ project_name/
 └── .gitignore
 ```
 
-* `ezy.json`: Project settings (including dependencies and scripts).
-* `main.py`: Application entry point.
-* `app_service.py`: Example service.
-* `test/`: Directory for test files.
-* `ezy_modules/`: Directory for project-specific dependencies.
-* `.gitignore`: Git ignore file.
+- `ezy.json`: Project configuration (including dependencies and scripts).
+- `main.py`: Application entry point.
+- `app_service.py`: Example service.
+- `test/`: Directory for test files.
+- `ezy_modules/`: Directory for project-specific dependencies.
+- `.gitignore`: Git ignore file.
 
 When you generate a resource with the `ezy generate res <name>` command, the following structure is created:
 
-```
+```text
 <name>/
 ├── __init__.py
 ├── dto/
@@ -810,11 +813,11 @@ When you generate a resource with the `ezy generate res <name>` command, the fol
 └── <name>_service.py
 ```
 
-A test file is also created at `test/test_<name>_service.py`.
+Additionally, a test file is created at `test/test_<name>_service.py`.
 
 > **Note**
-> 
-> * The CLI uses color codes to enhance readability in terminals that support ANSI colors.
-> * The `test` command requires pytest to be installed. It is included in the default dependencies of new projects.
-> * The `lint` command requires flake8. You may need to install it separately.
-> * The `update` command currently only simulates updates without actually performing them.
+>
+> - The CLI uses color codes for better readability in terminals that support ANSI colors.
+> - The `test` command requires pytest to be installed. It's included in the default dependencies of new projects.
+> - The `lint` command requires flake8. You may need to install it separately.
+> - The `update` command currently only simulates updates and doesn't perform actual updates.
