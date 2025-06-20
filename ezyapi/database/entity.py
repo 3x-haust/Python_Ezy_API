@@ -8,20 +8,6 @@ from typing import List, TypeVar, Any
 
 T = TypeVar('T')
 
-def OneToMany(target_entity, mapped_by: str = None):
-    return {
-        '_relation_type': 'one_to_many',
-        '_target_entity': target_entity,
-        '_mapped_by': mapped_by
-    }
-
-def ManyToOne(target_entity, foreign_key: str = None):
-    return {
-        '_relation_type': 'many_to_one', 
-        '_target_entity': target_entity,
-        '_foreign_key': foreign_key
-    }
-
 class EzyEntityBase:
     """
     모든 데이터 엔티티의 기본 클래스입니다.
@@ -58,3 +44,25 @@ class EzyEntityBase:
             'auto_increment': True,
             'column_type': None
         }
+    
+    def get_relationship_info(self):
+        """
+        관계 정보를 반환합니다.
+        
+        Returns:
+            dict: 필드명을 키로 하는 관계 메타데이터 딕셔너리
+        """
+        from ezyapi.database.relationships import get_relationship_metadata
+        
+        return get_relationship_metadata(self.__class__)
+    
+    def get_column_info(self):
+        """
+        컬럼 정보를 반환합니다.
+        
+        Returns:
+            dict: 필드명을 키로 하는 컬럼 메타데이터 딕셔너리
+        """
+        from ezyapi.database.decorators import get_column_metadata
+        
+        return get_column_metadata(self.__class__)

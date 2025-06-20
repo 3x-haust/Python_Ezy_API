@@ -19,4 +19,4 @@ from ezyapi.database.relationships import OneToMany, ManyToOne
 from ezyapi.decorators.route import route
 from ezyapi.dto.base import EzyBaseDTO
 
-__version__ = "1.7.2"
+__version__ = "1.7.6"
