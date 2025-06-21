@@ -190,17 +190,15 @@ class EzyAPI:
                     }
 
             if request_body:
-                async def endpoint_with_body(
-                    data: request_body,
-                    service_instance=service_instance, 
-                    method=method,
-                    path_params=path_params
-                ):
+                async def endpoint_with_body(request: Request, data, service_instance=service_instance, method=method, path_params=path_params, param_types=param_types):
                     call_args = {'data': data}
                     
                     for param in path_params:
+                        param_value = request.path_params.get(param)
+                        if param_value is None:
+                            raise HTTPException(status_code=400, detail=f"경로 매개변수가 누락되었습니다: {param}")
                         call_args[param] = self._convert_param_type(
-                            request.path_params.get(param), 
+                            param_value, 
                             param_types.get(param, Any)
                         )
                     
@@ -209,6 +207,12 @@ class EzyAPI:
                         template_content = self._load_html_template(result)
                         return HTMLResponse(content=template_content)
                     return result
+                
+                endpoint_with_body.__annotations__ = {
+                    'request': Request,
+                    'data': request_body,
+                    'return': Any
+                }
                 func = endpoint_with_body
             elif path_params or query_params:
                 async def endpoint_with_params(request: Request, service_instance=service_instance, method=method, 
@@ -216,7 +220,10 @@ class EzyAPI:
                     call_args = {}
                     
                     for param in path_params:
-                        call_args[param] = self._convert_param_type(request.path_params.get(param), param_types.get(param, Any))
+                        param_value = request.path_params.get(param)
+                        if param_value is None:
+                            raise HTTPException(status_code=400, detail=f"경로 매개변수가 누락되었습니다: {param}")
+                        call_args[param] = self._convert_param_type(param_value, param_types.get(param, Any))
                     
                     for param_name, param_info in query_params.items():
                         value = request.query_params.get(param_name)
@@ -324,6 +331,8 @@ class EzyAPI:
         Returns:
             Any: 변환된 값
         """
+        if value is None:
+            return None
         if param_type == int:
             return int(value)
         elif param_type == float:

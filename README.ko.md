@@ -224,14 +224,19 @@ from ezyapi.database import DatabaseConfig
 from user.user_service import UserService
 from app_service import AppService
 
+app = EzyAPI()
+
 if __name__ == "__main__":
-    app = EzyAPI()
     app.run(port=8000)
 ```
 
+> **팁**
+>>
+> 개발 중에는 코드 변경 시 자동으로 서버를 재시작하려면 `reload=True` 옵션을 사용할 수 있습니다.
+
 ### 어플리케이션 실행하기
 
-OS 터미널에서 다음 명령을 어플리케이션을 실행할 수 있습니다
+OS 터미널에서 다음 명령을 어플리케이션을 실행할 수 있습니다.
 ```bash
 $ ezy run start
 ```
@@ -284,8 +289,8 @@ class AppService(EzyService):
 |`edit_user`|PATCH|`/user/`|
 
 > **팁**
-> 
-> `get`, `update`, `delete`, `edit` 메소드들은 `by_id` 등을 이용하여 `경로 파라미터를 이용할 수 있습니다` 
+>
+> `get`, `update`, `delete`, `edit` 메소드들은 `by_id` 등을 이용하여 경로 파라미터를 이용할 수 있습니다.  
 > 예: `get_user_by_id` ➡️ `GET /user/{id}`
 
 ### 서비스 등록
@@ -298,8 +303,10 @@ from ezyapi import EzyAPI
 from ezyapi.database import DatabaseConfig
 from app_service import AppService
 
+app = EzyAPI()
+app.add_service(AppService)
+
 if __name__ == "__main__":
-    app.add_service(AppService)
     app.run(port=8000)
 ```
 
@@ -320,11 +327,13 @@ class UserService(EzyService):
 - `id`는 URL 경로에서 `path parameter`로 사용됩니다.
 
 **요청 예시**
+
 ```http
 GET /user/10
 ```
 
 **응답 예시**
+
 ```json
 {
   "id": 10,
@@ -356,11 +365,13 @@ class UserService(EzyService):
 - 쿼리스트링으로 `name`, `age`를 전달할 수 있습니다.
 
 **요청 예시**
+
 ```http
 GET /user/?name=Alice&age=30
 ```
 
 **응답 예시**
+
 ```json
 [
   {
@@ -389,11 +400,13 @@ class UserService(EzyService):
 - `description`은 API 문서화에 사용됩니다.
 
 **요청 예시**
+
 ```http
 GET /name/Alice
 ```
 
 **응답 예시**
+
 ```json
 {
   "name": "Alice",
@@ -401,8 +414,8 @@ GET /name/Alice
 }
 ```
 
-> **팁**  
-> 
+> **팁**
+>
 > `@route()` 데코레이터를 사용하면 자동 매핑을 오버라이드하여 원하는 URL, HTTP 메서드를 자유롭게 설정할 수 있습니다.
 
 </br>
@@ -426,21 +439,25 @@ if __name__ == "__main__":
     
     # SQLite 설정
     db_config = DatabaseConfig(
-        type="sqlite",
-        path="./app.db"
+        db_type="sqlite",
+        connection_params={
+            "dbname": "./app.db"
+        }
     )
     
     # 또는 MySQL 설정
     # db_config = DatabaseConfig(
-    #     type="mysql",
-    #     host="localhost",
-    #     port=3306,
-    #     username="root",
-    #     password="password",
-    #     database="myapp"
+    #     db_type="mysql",
+    #     connection_params={
+    #         "host": "localhost",
+    #         "port": 3306,
+    #         "user": "root",
+    #         "password": "password",
+    #         "dbname": "myapp"
+    #     }
     # )
     
-    app.add_database(db_config)
+    app.configure_database(db_config)
     app.add_service(UserService)
     app.run(port=8000)
 ```
@@ -456,42 +473,32 @@ if __name__ == "__main__":
 from ezyapi import EzyEntityBase
 
 class UserEntity(EzyEntityBase):
-    def __init__(self, name: str = "", email: str = ""):
+    def __init__(self, id: int = None, name: str = "", email: str = ""):
+        self.id = id
         self.name = name
         self.email = email
-    
-    # 기본값: id가 자동 증가 primary key가 됨
-    id: int = None
-    name: str = ""
-    email: str = ""
+
+# 이렇게 하면 자동으로 id가 PrimaryGeneratedColumn이 됩니다
 ```
 
 #### 어노테이션을 사용한 고급 엔티티
 
-데이터베이스 컬럼에 대한 더 세밀한 제어를 위해 TypeORM 스타일의 어노테이션을 사용할 수 있습니다:
+데이터베이스 컬럼에 대한 더 세밀한 제어를 위해 어노테이션을 사용할 수 있습니다:
 
 ```python
 # user/entity/user_entity.py
-from ezyapi import EzyEntityBase, PrimaryColumn, PrimaryGeneratedColumn, Column
-from typing import Annotated, Optional
+from typing import Annotated
+from ezyapi import EzyEntityBase, PrimaryGeneratedColumn, Column
 
 class UserEntity(EzyEntityBase):
-    def __init__(self, id: int = 0, name: str = "", major: Optional[str] = None, 
-                 grade: Optional[int] = None, isTeacher: bool = None):
-        self.id = id
-        self.name = name
-        self.major = major
-        self.grade = grade
-        self.isTeacher = isTeacher
+    def __init__(self, email: str = ""):
+        self.email = email
     
-    # 특정 컬럼 타입을 가진 커스텀 primary key
-    id: Annotated[int, PrimaryColumn(column_type="INT")] = 0
+    # 어노테이션을 사용하여 명시적으로 PrimaryGeneratedColumn 지정
+    id: Annotated[int, PrimaryGeneratedColumn()] = None
     
-    # 선택사항: 특별한 설정이 필요한 필드에만 어노테이션 추가
+    # 특별한 설정이 필요한 필드에만 어노테이션 추가
     name: Annotated[str, Column(nullable=False, column_type="VARCHAR(100)")] = ""
-    major: Optional[str] = None
-    grade: Optional[int] = None
-    isTeacher: bool = None
 ```
 
 #### 컬럼 어노테이션 타입
@@ -512,30 +519,36 @@ class UserEntity(EzyEntityBase):
 #### 다양한 Primary Key 예시
 
 ```python
+# 기본 자동 증가 primary key (명시적 어노테이션)
+class TodoEntity(EzyEntityBase):
+    def __init__(self, content: str = "", completed: bool = False):
+        self.content = content
+        self.completed = completed
+
+    id: Annotated[int, PrimaryGeneratedColumn()] = None
+
 # 문자열 primary key
 class ProductEntity(EzyEntityBase):
+    def __init__(self, name: str = "", price: float = 0.0):
+        self.name = name
+        self.price = price
+        
     product_code: Annotated[str, PrimaryColumn(column_type="VARCHAR(20)")] = None
-    name: str = ""
-    price: float = 0.0
 
 # 커스텀 자동 증가 primary key
 class OrderEntity(EzyEntityBase):
+    def __init__(self, user_id: int = 0, total_amount: float = 0.0):
+        self.user_id = user_id
+        self.total_amount = total_amount
+        
     order_id: Annotated[int, PrimaryGeneratedColumn(column_type="BIGINT")] = None
-    user_id: int = None
-    total_amount: float = 0.0
-
-# UUID primary key
-class SessionEntity(EzyEntityBase):
-    session_token: Annotated[str, PrimaryColumn(column_type="VARCHAR(36)")] = None
-    user_id: int = None
-    expires_at: str = None
 ```
 
 > **참고**
-> 
+>
 > - 어노테이션은 **선택사항**입니다 - 특별한 데이터베이스 설정이 필요한 필드에만 추가하면 됩니다
 > - 어노테이션이 없는 필드는 기본 동작을 사용합니다 (일반 컬럼)
-> - 다른 primary key가 지정되지 않은 경우 `id: int = None` 필드가 자동으로 자동 증가 primary key가 됩니다
+> - `__init__` 메서드에 `id` 파라미터가 있으면 자동으로 자동 증가 primary key가 됩니다
 
 ### 엔티티 관계
 
@@ -545,34 +558,27 @@ Ezy API는 TypeORM 스타일의 엔티티 관계를 지원하며, OneToMany와 M
 
 ```python
 # user/entity/user_entity.py
+from typing import List
 from ezyapi import EzyEntityBase, OneToMany, ManyToOne
-from typing import List, Optional
 
 class UserEntity(EzyEntityBase):
-    def __init__(self, name: str = "", email: str = ""):
+    def __init__(self, id: int = None, name: str = "", email: str = ""):
+        self.id = id
         self.name = name
         self.email = email
-    
-    id: int = None
-    name: str = ""
-    email: str = ""
     
     # OneToMany 관계: 한 사용자가 여러 게시글을 가질 수 있음
     posts: List['PostEntity'] = OneToMany('PostEntity', 'user_id')
 
 class PostEntity(EzyEntityBase):
-    def __init__(self, title: str = "", content: str = "", user_id: int = None):
+    def __init__(self, id: int = None, title: str = "", content: str = "", user_id: int = None):
+        self.id = id
         self.title = title
         self.content = content
         self.user_id = user_id
     
-    id: int = None
-    title: str = ""
-    content: str = ""
-    user_id: int = None
-    
     # ManyToOne 관계: 여러 게시글이 한 사용자에게 속할 수 있음
-    user: UserEntity = ManyToOne(UserEntity, 'user_id')
+    user: 'UserEntity' = ManyToOne('UserEntity', 'user_id')
 ```
 
 #### 관계 타입
@@ -741,7 +747,7 @@ $ ezy test
 ```
 
 > **참고**
-> 
+>
 > pytest가 설치되어 있어야 합니다.
 
 #### 코드 린팅
@@ -753,7 +759,7 @@ $ ezy lint
 ```
 
 > **참고**
-> 
+>
 > flake8이 설치되어 있어야 합니다.
 
 #### 정보 확인
@@ -776,7 +782,7 @@ $ ezy init
 
 `ezy new <project_name>` 명령으로 새 프로젝트를 생성하면 다음 구조가 생성됩니다:
 
-```
+```text
 project_name/
 ├── ezy.json
 ├── main.py
@@ -788,16 +794,16 @@ project_name/
 └── .gitignore
 ```
 
-* `ezy.json`: 프로젝트 설정(의존성 및 스크립트 포함).
-* `main.py`: 애플리케이션 진입점.
-* `app_service.py`: 예제 서비스.
-* `test/`: 테스트 파일 디렉토리.
-* `ezy_modules/`: 프로젝트별 의존성을 위한 디렉토리.
-* `.gitignore`: Git 무시 파일.
+- `ezy.json`: 프로젝트 설정(의존성 및 스크립트 포함).
+- `main.py`: 애플리케이션 진입점.
+- `app_service.py`: 예제 서비스.
+- `test/`: 테스트 파일 디렉토리.
+- `ezy_modules/`: 프로젝트별 의존성을 위한 디렉토리.
+- `.gitignore`: Git 무시 파일.
 
 `ezy generate res <name>` 명령으로 리소스를 생성하면 다음 구조가 생성됩니다:
 
-```
+```text
 <name>/
 ├── __init__.py
 ├── dto/
@@ -813,9 +819,9 @@ project_name/
 또한 `test/test_<name>_service.py`에 테스트 파일이 생성됩니다.
 
 > **참고**
-> 
-> * CLI는 ANSI 색상을 지원하는 터미널에서 가독성을 높이기 위해 색상 코드를 사용합니다.
-> * `test` 명령은 pytest가 설치되어 있어야 합니다. 새 프로젝트의 기본 의존성에 포함되어 있습니다.
-> * `lint` 명령은 flake8이 필요합니다. 별도로 설치해야 할 수 있습니다.
-> * `update` 명령은 현재 실제 업데이트를 수행하지 않고 시뮬레이션만 합니다.
+>
+> - CLI는 ANSI 색상을 지원하는 터미널에서 가독성을 높이기 위해 색상 코드를 사용합니다.
+> - `test` 명령은 pytest가 설치되어 있어야 합니다. 새 프로젝트의 기본 의존성에 포함되어 있습니다.
+> - `lint` 명령은 flake8이 필요합니다. 별도로 설치해야 할 수 있습니다.
+> - `update` 명령은 현재 실제 업데이트를 수행하지 않고 시뮬레이션만 합니다.
 

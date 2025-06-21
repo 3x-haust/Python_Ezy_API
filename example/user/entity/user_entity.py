@@ -1,6 +1,8 @@
 from ezyapi.database import EzyEntityBase
 from typing import List, TYPE_CHECKING
 
+from ezyapi.database.relationships import OneToMany
+
 if TYPE_CHECKING:
     from .post_entity import PostEntity
 
@@ -11,4 +13,6 @@ class UserEntity(EzyEntityBase):
         self.email = email
         self.age = age
         
-    posts: List['PostEntity'] = []
+    posts: List['PostEntity'] = OneToMany('PostEntity', 'user_id')
+
+

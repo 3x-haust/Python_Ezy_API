@@ -1,8 +1,8 @@
+from example.user.entity.user_entity import UserEntity
 from ezyapi.database import EzyEntityBase
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
-if TYPE_CHECKING:
-    from .user_entity import UserEntity
+from ezyapi.database.entity import ManyToOne
 
 class PostEntity(EzyEntityBase):
     def __init__(self, id: int = None, title: str = "", content: str = "", user_id: int = None):
@@ -11,4 +11,6 @@ class PostEntity(EzyEntityBase):
         self.content = content
         self.user_id = user_id
         
-    user: 'UserEntity' = None
+    user: UserEntity = ManyToOne('UserEntity', 'user_id')
+
+
