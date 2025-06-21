@@ -1,5 +1,5 @@
 This README is the English version.  
-[한국어 버전은 여기를 클릭하세요.](./README_KR.md)
+[한국어 버전은 여기를 클릭하세요.](./README.ko.md)
 
 ![Contributors](https://img.shields.io/github/contributors/3x-haust/Python_Ezy_API?style=flat)
 ![Forks](https://img.shields.io/github/forks/3x-haust/Python_Ezy_API?style=social?style=flat)
